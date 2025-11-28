@@ -1,0 +1,119 @@
+
+body {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    background-color: #fff;
+    color: #111;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
+  padding: 10px 40px;
+  background-color: white;
+  border-bottom: 1px solid #ddd;
+  position: sticky; 
+  top: 0;
+  z-index: 1000;
+}
+
+.logo img {
+  height: 60px;    
+  width: auto;
+  display: block;
+}
+
+.logo a {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 25px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.nav-links a:hover, .nav-links .active {
+    color: #ec0909;
+}
+
+.hero {
+    background: url('../images/logoKIDS.png') center/cover no-repeat;
+    height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.hero-text {
+    background-color: rgba(255,255,255,0.8);
+    padding: 40px;
+    border-radius: 8px;
+}
+
+.hero-text h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.hero-text p {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+}
+
+.btn {
+    text-decoration: none;
+    background-color: #111;
+    color: #fff;
+    padding: 12px 25px;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background-color: #da1b15;
+}
+
+.destacados {
+    padding: 50px 80px;
+    text-align: center;
+}
+
+.productos {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    margin-top: 30px;
+}
+
+.producto {
+    width: 250px;
+}
+
+.producto img {
+    width: 100%;
+    border-radius: 8px;
+}
+
+.producto h3 {
+    margin: 10px 0 5px;
+}
+
+footer {
+    background: #f5f5f5;
+    text-align: center;
+    padding: 20px;
+    margin-top: 40px;
+}
