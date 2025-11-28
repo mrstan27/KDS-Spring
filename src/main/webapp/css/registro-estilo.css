@@ -1,0 +1,194 @@
+@charset "UTF-8";
+
+/* Fondo rosado suave */
+body {
+    background-color: #ffe6eb; 
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Tarjeta blanca central */
+.registro-card {
+    background-color: white;
+    width: 400px;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Título */
+.registro-header h2 {
+    color: #c0392b; /* Rojo oscuro */
+    text-align: center;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.header-separator {
+    border: 0;
+    height: 2px;
+    background: #e74c3c;
+    margin-bottom: 30px;
+}
+
+/* Inputs y etiquetas */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #444;
+}
+
+.form-input, .form-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px; /* Bordes redondeados */
+    box-sizing: border-box;
+}
+
+/* Botón Rojo */
+.btn-registrar {
+    width: 100%;
+    background-color: #e74c3c;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background 0.3s;
+}
+
+.btn-registrar:hover {
+    background-color: #c0392b;
+}
+
+/* ... (todo tu código anterior) ... */
+
+/* Clase especial para cuando queremos la tarjeta más ancha (para las tablas) */
+.registro-card.wide {
+    width: 800px;
+    max-width: 95%;
+}
+
+/* Estilo simple para la tabla dentro de la tarjeta */
+.tabla-estilo {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+.tabla-estilo th, .tabla-estilo td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+.tabla-estilo th {
+    background-color: #f8f9fa;
+    color: #c0392b;
+}
+
+/* ... Tu código CSS anterior ... */
+
+/* === ESTILOS NUEVOS PARA TABLAS === */
+
+/* Modificador para tarjetas anchas (usar en listados) */
+.registro-card.wide {
+    width: 90%;          /* Ocupa casi todo el ancho */
+    max-width: 1000px;   /* Pero no te pases de 1000px */
+    padding: 30px;
+}
+
+/* Botón Nuevo (ajuste para que no ocupe todo el ancho) */
+.btn-nuevo {
+    display: inline-block;
+    width: auto;
+    background-color: #e74c3c;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    margin-bottom: 20px;
+    transition: background 0.3s;
+}
+.btn-nuevo:hover {
+    background-color: #c0392b;
+}
+
+/* Estilo de la Tabla Corporativa */
+.tabla-container {
+    overflow-x: auto; /* Para que no rompa en celulares */
+}
+
+.tabla-estilo {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    font-size: 15px;
+}
+
+.tabla-estilo th {
+    background-color: #c0392b; /* Rojo corporativo en el encabezado */
+    color: white;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+.tabla-estilo td {
+    padding: 14px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #555;
+}
+
+/* Efecto hover en las filas (Rosa muy pálido) */
+.tabla-estilo tr:hover {
+    background-color: #fff0f3; 
+}
+
+/* Badges de Estado */
+.badge-activo {
+    background-color: #2ecc71;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+}
+.badge-inactivo {
+    background-color: #95a5a6;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Botones de Acción pequeños */
+.btn-accion {
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: bold;
+    margin-right: 5px;
+    transition: opacity 0.3s;
+}
+.btn-accion:hover { opacity: 0.8; }
+
+.btn-editar { background-color: #f39c12; color: white; } /* Naranja */
+.btn-eliminar { background-color: #e74c3c; color: white; } /* Rojo */
