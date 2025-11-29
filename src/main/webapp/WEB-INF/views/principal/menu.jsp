@@ -31,6 +31,7 @@
         <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
             <i class="fa-solid fa-power-off"></i> Cerrar Sesión
         </a>
+       
     </div>
 
     <div class="menu-grid">
@@ -47,6 +48,12 @@
                 <div class="card-title">Roles</div>
                 <div class="card-desc">Configurar permisos</div>
             </a>
+            
+             <a href="${pageContext.request.contextPath}/compras" class="card-menu">
+    			<div class="card-icon"><i class="fa-solid fa-cart-shopping"></i></div>
+    			<div class="card-title">Compras</div>
+    			<div class="card-desc">Pedidos y Recepción</div>
+			</a>
         </c:if>
 
         <c:if test="${usuario.rol.nombreRol == 'Administrador' || usuario.rol.nombreRol == 'Almacenero'}">
