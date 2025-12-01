@@ -8,42 +8,30 @@
     <title>Iniciar Sesión - Kids Made Here</title>
     <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/registro-estilo.css">
     <style>
-        /* Estilos específicos para el Login con Fondo */
+        /* TUS ESTILOS DEL FONDO (Los mantengo igual) */
         body {
-            /* Establecemos la imagen como fondo */
-            background-image: url('${pageContext.request.contextPath}/images/fondo_tienda.jpg'); /* Asegúrate de que la ruta y nombre sean correctos */
-            background-size: cover; /* La imagen cubrirá todo el fondo, recortándose si es necesario */
-            background-position: center; /* Centramos la imagen */
-            background-repeat: no-repeat; /* Evitamos que se repita */
-            background-attachment: fixed; /* El fondo se queda fijo al hacer scroll */
-            
-            /* Mantenemos el centrado del formulario */
+            background-image: url('${pageContext.request.contextPath}/images/fondo_tienda.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            font-family: 'Segoe UI', sans-serif; /* Aseguramos la fuente */
+            font-family: 'Segoe UI', sans-serif;
         }
-
         .login-card {
-            background-color: rgba(255, 255, 255, 0.95); /* Fondo blanco semi-transparente para que resalte el formulario */
+            background-color: rgba(255, 255, 255, 0.95);
             width: 350px;
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2); /* Sombra más pronunciada para dar profundidad */
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
             text-align: center;
         }
-
-        /* Ajuste pequeño para el título */
-        .registro-header h2 {
-            color: #c0392b;
-            margin-bottom: 10px;
-        }
-        
-        .header-separator {
-             margin-bottom: 30px;
-        }
+        .registro-header h2 { color: #c0392b; margin-bottom: 10px; }
+        .header-separator { margin-bottom: 30px; }
     </style>
 </head>
 <body>
@@ -77,16 +65,19 @@
 
         <div class="form-group">
             <label for="password" class="form-label" style="text-align: left;">Contraseña</label>
-            <input type="password" name="password" class="form-input" spellcheck= "false" required placeholder="******"/>
+            <input type="password" name="password" class="form-input" required placeholder="******"/>
         </div>
 
-        <button class="btn-registrar"> <a href="${pageContext.request.contextPath}/index" class="btn-nav"> Ingresar</a></button>
+        <button type="submit" class="btn-registrar">Ingresar</button>
     </form>
     
     <div style="margin-top: 25px; font-size: 14px; color: #666;">
         ¿No tienes cuenta? <br>
     </div>
-    <button type="submit" class="btn-registrar"><a href="${pageContext.request.contextPath}/cliente/nuevo" class="btn-nav">Registrate</a></button>
+    
+    <a href="${pageContext.request.contextPath}/cliente/nuevo" class="btn-registrar" style="display:inline-block; text-decoration:none; line-height:15px; color:white;">
+        Registrate
+    </a>
 </div>
 
 </body>

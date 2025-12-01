@@ -26,6 +26,9 @@ public class Cliente {
 
     @Column(name = "correo", length = 100, nullable = false, unique = true)
     private String correo;
+    
+    @Column(name = "password", nullable = false)
+    private String password;
 
     @Column(name = "telefono", length = 20)
     private String telefono;
@@ -68,6 +71,10 @@ public class Cliente {
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
+	public String getPassword() {return password;}
+
+	public void setPassword(String password) {this.password = password;}
 
     //public List<VentaCabecera> getVentas() { return ventas; }
     //public void setVentas(List<VentaCabecera> ventas) { this.ventas = ventas; }

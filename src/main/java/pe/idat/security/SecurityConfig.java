@@ -9,7 +9,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import jakarta.servlet.DispatcherType;
 
 @Configuration
@@ -39,27 +38,36 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                // Permitir forwarding interno (login y errores)
                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 
-                // Recursos estáticos públicos
-                .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                // RUTAS PÚBLICAS
+                .requestMatchers("/", "/index").permitAll()
+                .requestMatchers("/login/**", "/auth/**").permitAll()
                 
-                // RUTAS PÚBLICAS ESPECÍFICAS
-                .requestMatchers("/login/**").permitAll() // Login de usuario y cliente
-                .requestMatchers("/index").permitAll()    // Landing page
-                
-                // TODO LO DEMÁS: CERRADO 🔒
+                // --- AQUÍ ESTÁ EL ARREGLO ---
+                // Permitimos entrar al formulario de registro y guardar sin estar logueado
+                .requestMatchers("/cliente/nuevo", "/cliente/guardar").permitAll() 
+                // -----------------------------
+
+                // Permitimos ver productos
+                .requestMatchers("/productos/categoria/**", "/productos/detalle/**").permitAll()
+
+                // Todo lo demás cerrado
                 .anyRequest().authenticated()
             )
             .formLogin(login -> login
-                .loginPage("/login/loginusuario") // Tu URL personalizada
-                .loginProcessingUrl("/login")     // A donde hace POST el formulario
-                .defaultSuccessUrl("/login/menu", true) // A donde va si es éxito
-                .usernameParameter("email")
-                .passwordParameter("password")
-                .permitAll()
-            )
+            	    .loginPage("/login/logincliente") // O tu página de login
+            	    .loginProcessingUrl("/login")
+            	    
+            	    // ESTO ES LO IMPORTANTE:
+            	    // "true" fuerza a ir a esta ruta siempre que el login sea exitoso
+            	    .defaultSuccessUrl("/login/login-success", true)
+            	    
+            	    .usernameParameter("email")
+            	    .passwordParameter("password")
+            	    .permitAll()
+            	)
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login/loginusuario?logout")

@@ -8,5 +8,6 @@ import pe.idat.entity.Cliente;
 @Repository
 public interface ClienteRepository extends JpaRepository<Cliente, Integer> {
     Cliente findByNumeroDocumento(String numeroDocumento);
+    Cliente findByCorreo(String correo);
 }
 

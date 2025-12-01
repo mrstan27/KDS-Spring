@@ -9,4 +9,5 @@ public interface ProductoService {
     Producto obtenerProductoPorId(Integer id);
     void eliminarProducto(Integer id);
     List<Categoria> listarCategorias(); 
+    List<Producto> listarPorNombreCategoria(String nombreCategoria);
 }

@@ -2,6 +2,7 @@ package pe.idat.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.List; // Importante: Necesario para manejar la lista de imágenes
 
 @Entity
 @Table(name = "productos")
@@ -24,17 +25,26 @@ public class Producto {
     @Column(name = "stock_actual", nullable = false)
     private Integer stockActual;
 
-    // Nuevo campo para la imagen (Hibernate lo agregará a la BD automáticamente)
+    // Esta queda como tu "Foto de Portada" (la que se ve en el catálogo)
     @Column(name = "imagen_url", length = 255)
     private String imagenUrl;
 
+    // Relación con Categoría (Muchos productos -> Una Categoría)
     @ManyToOne
     @JoinColumn(name = "categoria_id", nullable = false)
     private Categoria categoria;
 
+    // NUEVO: Galería de fotos adicionales
+    // "mappedBy" indica que la dueña de la relación es la clase Imagen (campo 'producto')
+    // CascadeType.ALL permite que si borras el producto, se borren sus fotos automáticamente.
+    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Imagen> imagenes;
+
+    // Constructor vacío requerido por JPA
     public Producto() {}
 
-    // Getters y Setters
+    // --- GETTERS Y SETTERS ---
+
     public Integer getProductoId() { return productoId; }
     public void setProductoId(Integer productoId) { this.productoId = productoId; }
 
@@ -55,4 +65,8 @@ public class Producto {
 
     public Categoria getCategoria() { return categoria; }
     public void setCategoria(Categoria categoria) { this.categoria = categoria; }
+
+    // Getters y Setters de la nueva lista
+    public List<Imagen> getImagenes() { return imagenes; }
+    public void setImagenes(List<Imagen> imagenes) { this.imagenes = imagenes; }
 }

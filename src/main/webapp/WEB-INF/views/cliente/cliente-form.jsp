@@ -67,11 +67,16 @@
 
         <div class="form-group">
             <label class="form-label">Correo</label>
-            <form:input path="correo" cssClass="form-input" type="email"/>
+            <form:input path="correo" cssClass="form-input" type="email" required="true"/>
         </div>
 
-        <button type="submit" class="btn-registrar"><a href="${pageContext.request.contextPath}/login/logincliente" class="btn-nav">
-            ${cliente.clienteId != null ? 'Actualizar' : 'Registrar'}</a>
+        <div class="form-group">
+            <label class="form-label">Crear Contraseña</label>
+            <form:password path="password" cssClass="form-input" required="true" placeholder="******"/>
+        </div>
+
+        <button type="submit" class="btn-registrar">
+            ${cliente.clienteId != null ? 'Actualizar' : 'Registrar'}
         </button>
 
     </form:form>
@@ -80,4 +85,3 @@
 
 </body>
 </html>
-

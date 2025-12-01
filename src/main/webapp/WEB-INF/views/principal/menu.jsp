@@ -83,7 +83,7 @@
                 <div class="card-desc">Registrar salida de mercadería</div>
             </a>
 
-            <a href="${pageContext.request.contextPath}/clientes" class="card-menu">
+            <a href="${pageContext.request.contextPath}/cliente/listar" class="card-menu">
                 <div class="card-icon"><i class="fa-solid fa-user-group"></i></div>
                 <div class="card-title">Clientes</div>
                 <div class="card-desc">Cartera de clientes</div>
