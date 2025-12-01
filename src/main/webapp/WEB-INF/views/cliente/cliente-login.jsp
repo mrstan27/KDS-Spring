@@ -80,5 +80,50 @@
     </a>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<c:if test="${not empty nombreRegistro}">
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            // 1. Lanzar Confeti
+            var count = 200;
+            var defaults = {
+                origin: { y: 0.7 }
+            };
+
+            function fire(particleRatio, opts) {
+                confetti(Object.assign({}, defaults, opts, {
+                    particleCount: Math.floor(count * particleRatio)
+                }));
+            }
+
+            fire(0.25, { spread: 26, startVelocity: 55, });
+            fire(0.2, { spread: 60, });
+            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+            fire(0.1, { spread: 120, startVelocity: 45, });
+
+            // 2. Mostrar Ventana de Bienvenida
+            Swal.fire({
+                title: '¡Bienvenido a la familia!',
+                text: 'Hola ${nombreRegistro}, tu cuenta ha sido creada exitosamente. Ya puedes iniciar sesión.',
+                icon: 'success',
+                confirmButtonText: '¡GENIAL!',
+                confirmButtonColor: '#c0392b', // Rojo Kids Made Here
+                backdrop: `rgba(0,0,123,0.1)`, // Fondo azulado muy suave
+                padding: '2rem',
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutUp'
+                }
+            });
+        });
+    </script>
+</c:if>
+
 </body>
 </html>

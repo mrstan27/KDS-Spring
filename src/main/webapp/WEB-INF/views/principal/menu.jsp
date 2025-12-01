@@ -63,7 +63,7 @@
                 <div class="card-desc">Catálogo de prendas</div>
             </a>
 
-            <a href="${pageContext.request.contextPath}/proveedores" class="card-menu">
+            <a href="${pageContext.request.contextPath}/proveedor/lista" class="card-menu">
                 <div class="card-icon"><i class="fa-solid fa-truck"></i></div>
                 <div class="card-title">Proveedores</div>
                 <div class="card-desc">Gestión de abastecimiento</div>

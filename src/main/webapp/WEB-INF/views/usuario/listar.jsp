@@ -14,7 +14,7 @@
     <div class="registro-card wide">
         
         <div style="margin-bottom: 15px;">
-            <a href="${pageContext.request.contextPath}/menu" style="color: #c0392b; text-decoration: none; font-weight: bold;">
+            <a href="${pageContext.request.contextPath}/login/menu" style="color: #c0392b; text-decoration: none; font-weight: bold;">
                 <i class="fa-solid fa-arrow-left"></i> Volver al Menú
             </a>
         </div>

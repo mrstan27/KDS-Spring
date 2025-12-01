@@ -1,11 +1,11 @@
 package pe.idat.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder; // IMPORTANTE
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes; // IMPORTANTE
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import pe.idat.entity.Cliente;
 import pe.idat.service.ClienteService;
@@ -17,18 +17,17 @@ public class ClienteController {
     @Autowired
     private ClienteService clienteService;
 
-    // Inyectamos el encriptador de Spring Security
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // LISTAR (Solo para admin)
+    // --- 1. LISTAR (Para el Admin) ---
     @GetMapping("/listar")
     public String listarClientes(Model model) {
         model.addAttribute("listaClientes", clienteService.listar());
         return "cliente/cliente-list";
     }
 
-    // NUEVO CLIENTE (Público)
+    // --- 2. MOSTRAR FORMULARIO DE REGISTRO ---
     @GetMapping("/nuevo")
     public String nuevoCliente(Model model) {
         model.addAttribute("cliente", new Cliente());
@@ -36,59 +35,77 @@ public class ClienteController {
         return "cliente/cliente-form";
     }
 
-    // GUARDAR O ACTUALIZAR
+    // --- 3. GUARDAR (LA LÓGICA IMPORTANTE) ---
     @PostMapping("/guardar")
     public String guardarCliente(@ModelAttribute("cliente") Cliente cliente, 
                                  Model model,
-                                 RedirectAttributes flash) { // Usamos flash para mensajes
+                                 RedirectAttributes flash) { // 'flash' sirve para pasar mensajes entre redirecciones
 
-        // 1. Validación de Documento Duplicado
-        Cliente existenteDoc = clienteService.buscarPorNumeroDocumento(cliente.getNumeroDocumento());
-        if (existenteDoc != null && !existenteDoc.getClienteId().equals(cliente.getClienteId())) {
+        // A) VALIDACIÓN: Verificar si el DNI ya existe (para evitar duplicados)
+        Cliente existente = clienteService.buscarPorNumeroDocumento(cliente.getNumeroDocumento());
+        if (existente != null && !existente.getClienteId().equals(cliente.getClienteId())) {
             model.addAttribute("error", "El número de documento ya está registrado.");
+            model.addAttribute("titulo", cliente.getClienteId() == null ? "Registrar Cliente" : "Editar Cliente");
             return "cliente/cliente-form";
         }
-        
-        // 2. Lógica de Contraseña
+
+        // B) LÓGICA DE GUARDADO
         if (cliente.getClienteId() == null) {
-            // A) ES NUEVO REGISTRO
-            // Encriptamos la contraseña que viene del formulario
+            // CASO 1: ES UN REGISTRO NUEVO (Público)
+            
+            // 1. Encriptamos la contraseña
             String passEncriptada = passwordEncoder.encode(cliente.getPassword());
             cliente.setPassword(passEncriptada);
-            cliente.setEstado("Activo"); // Aseguramos estado activo
             
+            // 2. Estado inicial
+            cliente.setEstado("Activo");
+            
+            // 3. Guardamos
             clienteService.guardar(cliente);
             
-            // Redirigimos al LOGIN avisando que fue exitoso
-            flash.addFlashAttribute("success", "¡Registro exitoso! Por favor inicia sesión.");
-            return "redirect:/login/logincliente"; // Te manda al login
+            // 4. PREPARAMOS EL MENSAJE DE BIENVENIDA (Para el Confeti 🎉)
+            flash.addFlashAttribute("nombreRegistro", cliente.getNombre());
+            
+            // 5. Redirigimos al Login de Clientes
+            return "redirect:/login/logincliente";
             
         } else {
-            // B) ES ACTUALIZACIÓN (Edición por Admin o el mismo cliente)
-            // Recuperamos el cliente original de la BD para no perder la contraseña si no la envió
+            // CASO 2: ES UNA EDICIÓN (Probablemente el Admin editando datos)
+            
+            // Recuperamos el cliente original de la BD para no perder la contraseña si viene vacía
             Cliente clienteOriginal = clienteService.buscarPorId(cliente.getClienteId());
             
-            // Si el campo password viene vacío en el form, mantenemos la antigua
             if (cliente.getPassword() == null || cliente.getPassword().isEmpty()) {
+                // Si no escribió nueva contraseña, mantenemos la anterior
                 cliente.setPassword(clienteOriginal.getPassword());
             } else {
-                // Si escribió nueva contraseña, la encriptamos
+                // Si escribió una nueva, la encriptamos
                 cliente.setPassword(passwordEncoder.encode(cliente.getPassword()));
             }
             
+            // Mantenemos el estado original si no se envió en el form
+            if (cliente.getEstado() == null) {
+                cliente.setEstado(clienteOriginal.getEstado());
+            }
+
             clienteService.guardar(cliente);
-            return "redirect:/cliente/listar"; // Si editó un admin, vuelve a la lista
+            
+            // Admin vuelve a la lista
+            flash.addFlashAttribute("success", "Cliente actualizado correctamente.");
+            return "redirect:/cliente/listar";
         }
     }
 
-    // ... tus otros métodos (editar, eliminar) siguen igual ...
-    // EDITAR
+    // --- 4. EDITAR (Vista Admin) ---
     @GetMapping("/editar/{id}")
     public String editarCliente(@PathVariable("id") Integer id, Model model) {
         Cliente cliente = clienteService.buscarPorId(id);
-        if (cliente == null) return "redirect:/cliente/listar";
 
-        // Limpiamos la password para que no se vea en el formulario de edición
+        if (cliente == null) {
+            return "redirect:/cliente/listar";
+        }
+
+        // Limpiamos la password para que no aparezca encriptada en el formulario
         cliente.setPassword(""); 
         
         model.addAttribute("cliente", cliente);
@@ -96,11 +113,11 @@ public class ClienteController {
         return "cliente/cliente-form";
     }
 
-    // ELIMINAR
+    // --- 5. ELIMINAR (Vista Admin) ---
     @GetMapping("/eliminar/{id}")
-    public String eliminarCliente(@PathVariable("id") Integer id) {
+    public String eliminarCliente(@PathVariable("id") Integer id, RedirectAttributes flash) {
         clienteService.eliminar(id);
+        flash.addFlashAttribute("success", "Cliente eliminado correctamente.");
         return "redirect:/cliente/listar";
     }
 }
-
