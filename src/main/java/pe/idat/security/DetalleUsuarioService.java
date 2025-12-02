@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import jakarta.servlet.http.HttpServletRequest; // IMPORTANTE
 import pe.idat.entity.Cliente;
 import pe.idat.entity.Usuario;
 import pe.idat.repository.ClienteRepository;
@@ -22,53 +23,47 @@ public class DetalleUsuarioService implements UserDetailsService {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
-    private ClienteRepository clienteRepository; // <--- AGREGAMOS ESTO
+    private ClienteRepository clienteRepository;
+    
+    @Autowired
+    private HttpServletRequest request; // Para leer el input oculto
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         
-        // -----------------------------------------------------------
-        // 1. PRIMER INTENTO: BUSCAR EN LA TABLA USUARIOS (Admin/Staff)
-        // -----------------------------------------------------------
-        // Usamos .orElse(null) para que NO lance error si no encuentra, y nos deje seguir buscando
-        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+        // LEEMOS LA MARCA DEL FORMULARIO
+        String tipoAcceso = request.getParameter("tipoAcceso");
+        
+        // =======================================================
+        // CASO 1: LOGIN DE ADMIN (Solo busca en USUARIOS)
+        // =======================================================
+        if (tipoAcceso != null && tipoAcceso.equals("admin")) {
+            Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
 
-        if (usuario != null) {
-            // Si lo encontró aquí, es un empleado
-            SimpleGrantedAuthority authority = new SimpleGrantedAuthority(usuario.getRol().getNombreRol());
-            
-            return new User(
-                usuario.getEmail(),
-                usuario.getPasswordHash(),
-                usuario.getActivo(),
-                true, true, true,
-                Collections.singletonList(authority)
-            );
+            if (usuario != null) {
+                SimpleGrantedAuthority authority = new SimpleGrantedAuthority(usuario.getRol().getNombreRol());
+                return new User(usuario.getEmail(), usuario.getPasswordHash(), usuario.getActivo(), 
+                                true, true, true, Collections.singletonList(authority));
+            }
+            // Si no lo encuentra, NO busca en clientes. Lanza error.
+            throw new UsernameNotFoundException("Usuario no encontrado");
         }
 
-        // -----------------------------------------------------------
-        // 2. SEGUNDO INTENTO: BUSCAR EN LA TABLA CLIENTES
-        // -----------------------------------------------------------
-        // Importante: Asegúrate de tener findByCorreo en ClienteRepository
-        Cliente cliente = clienteRepository.findByCorreo(email);
+        // =======================================================
+        // CASO 2: LOGIN DE CLIENTE (Solo busca en CLIENTES)
+        // =======================================================
+        if (tipoAcceso != null && tipoAcceso.equals("cliente")) {
+            Cliente cliente = clienteRepository.findByCorreo(email);
 
-        if (cliente != null) {
-            // Si lo encontró aquí, es un cliente
-            // Le asignamos manualmente el rol "CLIENTE" para diferenciarlo
-            SimpleGrantedAuthority authority = new SimpleGrantedAuthority("CLIENTE");
-
-            return new User(
-                cliente.getCorreo(),
-                cliente.getPassword(), // La contraseña que ya registraste encriptada
-                true, // Asumimos activo (o usa cliente.getEstado().equals("Activo"))
-                true, true, true,
-                Collections.singletonList(authority)
-            );
+            if (cliente != null) {
+                SimpleGrantedAuthority authority = new SimpleGrantedAuthority("CLIENTE");
+                return new User(cliente.getCorreo(), cliente.getPassword(), true, 
+                                true, true, true, Collections.singletonList(authority));
+            }
+            // Si no lo encuentra, NO busca en admins. Lanza error.
+            throw new UsernameNotFoundException("Cliente no encontrado");
         }
 
-        // -----------------------------------------------------------
-        // 3. SI NO ESTÁ EN NINGUNA -> ERROR
-        // -----------------------------------------------------------
-        throw new UsernameNotFoundException("Usuario o Cliente no encontrado con correo: " + email);
+        throw new UsernameNotFoundException("Tipo de acceso desconocido");
     }
 }

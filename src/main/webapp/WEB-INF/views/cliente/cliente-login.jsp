@@ -8,27 +8,17 @@
     <title>Iniciar Sesión - Kids Made Here</title>
     <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/registro-estilo.css">
     <style>
-        /* TUS ESTILOS DEL FONDO (Los mantengo igual) */
         body {
             background-image: url('${pageContext.request.contextPath}/images/fondo_tienda.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            font-family: 'Segoe UI', sans-serif;
+            background-size: cover; background-position: center;
+            background-repeat: no-repeat; background-attachment: fixed;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif;
         }
         .login-card {
             background-color: rgba(255, 255, 255, 0.95);
-            width: 350px;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-            text-align: center;
+            width: 350px; padding: 40px; border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center;
         }
         .registro-header h2 { color: #c0392b; margin-bottom: 10px; }
         .header-separator { margin-bottom: 30px; }
@@ -55,8 +45,9 @@
     </c:if>
 
     <form action="${pageContext.request.contextPath}/login" method="post">
-        
         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+        
+        <input type="hidden" name="tipoAcceso" value="cliente"/> 
 
         <div class="form-group">
             <label class="form-label" style="text-align: left;">Correo Electrónico</label>
@@ -74,7 +65,6 @@
     <div style="margin-top: 25px; font-size: 14px; color: #666;">
         ¿No tienes cuenta? <br>
     </div>
-    
     <a href="${pageContext.request.contextPath}/cliente/nuevo" class="btn-registrar" style="display:inline-block; text-decoration:none; line-height:15px; color:white;">
         Registrate
     </a>
@@ -86,40 +76,27 @@
 <c:if test="${not empty nombreRegistro}">
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            
-            // 1. Lanzar Confeti
             var count = 200;
-            var defaults = {
-                origin: { y: 0.7 }
-            };
-
+            var defaults = { origin: { y: 0.7 } };
             function fire(particleRatio, opts) {
                 confetti(Object.assign({}, defaults, opts, {
                     particleCount: Math.floor(count * particleRatio)
                 }));
             }
-
             fire(0.25, { spread: 26, startVelocity: 55, });
             fire(0.2, { spread: 60, });
             fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
             fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
             fire(0.1, { spread: 120, startVelocity: 45, });
 
-            // 2. Mostrar Ventana de Bienvenida
             Swal.fire({
                 title: '¡Bienvenido a la familia!',
                 text: 'Hola ${nombreRegistro}, tu cuenta ha sido creada exitosamente. Ya puedes iniciar sesión.',
                 icon: 'success',
                 confirmButtonText: '¡GENIAL!',
-                confirmButtonColor: '#c0392b', // Rojo Kids Made Here
-                backdrop: `rgba(0,0,123,0.1)`, // Fondo azulado muy suave
-                padding: '2rem',
-                showClass: {
-                    popup: 'animate__animated animate__fadeInDown'
-                },
-                hideClass: {
-                    popup: 'animate__animated animate__fadeOutUp'
-                }
+                confirmButtonColor: '#c0392b',
+                backdrop: `rgba(0,0,123,0.1)`,
+                padding: '2rem'
             });
         });
     </script>

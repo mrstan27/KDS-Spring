@@ -44,33 +44,42 @@ public class SecurityConfig {
                 // RUTAS PÚBLICAS
                 .requestMatchers("/", "/index").permitAll()
                 .requestMatchers("/login/**", "/auth/**").permitAll()
-                
-                // --- AQUÍ ESTÁ EL ARREGLO ---
-                // Permitimos entrar al formulario de registro y guardar sin estar logueado
                 .requestMatchers("/cliente/nuevo", "/cliente/guardar").permitAll() 
-                // -----------------------------
-
-                // Permitimos ver productos
                 .requestMatchers("/productos/categoria/**", "/productos/detalle/**").permitAll()
 
                 // Todo lo demás cerrado
                 .anyRequest().authenticated()
             )
             .formLogin(login -> login
-            	    .loginPage("/login/logincliente") // O tu página de login
-            	    .loginProcessingUrl("/login")
-            	    
-            	    // ESTO ES LO IMPORTANTE:
-            	    // "true" fuerza a ir a esta ruta siempre que el login sea exitoso
-            	    .defaultSuccessUrl("/login/login-success", true)
-            	    
-            	    .usernameParameter("email")
-            	    .passwordParameter("password")
-            	    .permitAll()
-            	)
+                .loginPage("/login/logincliente") 
+                .loginProcessingUrl("/login")
+                
+                // Éxito:
+                .defaultSuccessUrl("/login/login-success", true)
+                
+                // 🔴 FALLO (AQUÍ ESTÁ EL ARREGLO PARA EL /idat)
+                .failureHandler((request, response, exception) -> {
+                    String tipoAcceso = request.getParameter("tipoAcceso");
+                    
+                    // Esto obtendrá "/idat" gracias a tu application.properties
+                    String contextPath = request.getContextPath(); 
+                    
+                    if (tipoAcceso != null && tipoAcceso.equals("admin")) {
+                        // Redirige a: /idat/login/loginusuario?error
+                        response.sendRedirect(contextPath + "/login/loginusuario?error");
+                    } else {
+                        // Redirige a: /idat/login/logincliente?error
+                        response.sendRedirect(contextPath + "/login/logincliente?error");
+                    }
+                })
+                
+                .usernameParameter("email")
+                .passwordParameter("password")
+                .permitAll()
+            )
             .logout(logout -> logout
                 .logoutUrl("/logout")
-                .logoutSuccessUrl("/login/loginusuario?logout")
+                .logoutSuccessUrl("/login/logincliente?logout")
                 .permitAll()
             );
 

@@ -106,9 +106,9 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("☑️ Las categorías ya existen.");
         }
         
-if (productoRepository.count() == 0) {
+        if (productoRepository.count() == 0) {
             
-            // Buscamos la categoría JEANS
+            // Buscamos la categoría JEANSs
             Categoria catJeans = categoriaRepository.findAll().stream()
                 .filter(c -> c.getNombreCategoria().equals("JEANS")).findFirst().orElse(null);
 
@@ -143,6 +143,9 @@ if (productoRepository.count() == 0) {
                 }
                 System.out.println("👖 Se cargaron los 10 JEANS de prueba exitosamente.");
             }
+            
+            
+            
         } else {
              System.out.println("☑️ Los productos ya existen en la BD.");
         }
