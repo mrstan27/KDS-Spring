@@ -13,11 +13,13 @@
 
 <div class="registro-card wide">
 
+	<div style="margin-bottom: 15px;">
+            <a href="${pageContext.request.contextPath}/login/menu" style="color: #c0392b; text-decoration: none; font-weight: bold;">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Menú
+            </a>
+        </div>
     <div class="registro-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h2 style="margin: 0;">Lista de Clientes</h2>
-        <a href="${pageContext.request.contextPath}/login/menu" class="btn-nav" style="background-color: #555; font-size: 0.9rem; text-decoration: none; color: white; padding: 8px 15px; border-radius: 5px;">
-            <i class="fa-solid fa-arrow-left"></i> Volver al Menú
-        </a>
     </div>
     <hr class="header-separator">
 
@@ -61,12 +63,7 @@
 
                         <td style="text-align: center;">
                             <div style="display: flex; gap: 5px; justify-content: center;">
-                                <a href="${pageContext.request.contextPath}/cliente/editar/${c.clienteId}"
-                                   class="btn-accion" 
-                                   style="text-decoration: none; padding: 5px 10px; background: #f39c12; color: white; border-radius: 4px;">
-                                   Editar
-                                </a>
-                                
+
                                 <a href="${pageContext.request.contextPath}/cliente/eliminar/${c.clienteId}"
                                    class="btn-accion" 
                                    style="text-decoration: none; padding: 5px 10px; background: #e74c3c; color: white; border-radius: 4px;"
