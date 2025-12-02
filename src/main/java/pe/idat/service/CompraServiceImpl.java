@@ -103,7 +103,7 @@ public class CompraServiceImpl implements CompraService {
         compraRepository.save(compra);
     }
     
-    // === EL NUEVO MÉTODO QUE TE FALTABA ===
+    // === NUEVO MÉTODO ===
     @Override
     @Transactional
     public void registrarFacturaFisica(Integer compraId, String numeroFactura) {

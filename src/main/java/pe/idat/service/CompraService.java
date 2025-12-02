@@ -5,12 +5,12 @@ import pe.idat.entity.Compra;
 
 public interface CompraService {
     
-    // Paso 1: Generar la Orden (No mueve stock)
+    // Paso 1: Generar la Orden
     Compra registrarCompra(CompraDTO compraDTO, String emailUsuario);
     
-    // Paso 2: Registrar Factura Física (Nuevo)
+    // Paso 2: Registrar Factura Física (NUEVO)
     void registrarFacturaFisica(Integer compraId, String numeroFactura);
 
-    // Paso 3: Confirmar llegada del camión (Mueve stock y genera Kardex)
+    // Paso 3: Confirmar llegada del camión
     void confirmarRecepcionMercaderia(Integer compraId, String emailAlmacenero);
 }

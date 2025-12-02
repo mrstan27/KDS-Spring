@@ -27,14 +27,10 @@
         </div>
 
         <c:if test="${not empty success}">
-            <div class="alert alert-success">
-                <i class="fa-solid fa-check-circle"></i> ${success}
-            </div>
+            <div class="alert alert-success"><i class="fa-solid fa-check-circle"></i> ${success}</div>
         </c:if>
         <c:if test="${not empty error}">
-            <div class="alert alert-danger">
-                <i class="fa-solid fa-triangle-exclamation"></i> ${error}
-            </div>
+            <div class="alert alert-danger"><i class="fa-solid fa-triangle-exclamation"></i> ${error}</div>
         </c:if>
         
         <a href="${pageContext.request.contextPath}/compras/nueva" class="btn-nuevo">
@@ -75,23 +71,24 @@
                             
                             <td>
                                 <c:if test="${c.estadoLogistico == 'PENDIENTE'}">
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="fa-solid fa-clock"></i> Pendiente
-                                    </span>
+                                    <span class="badge bg-warning text-dark">Pendiente</span>
                                 </c:if>
                                 <c:if test="${c.estadoLogistico == 'RECIBIDO'}">
-                                    <span class="badge bg-success">
-                                        <i class="fa-solid fa-check-double"></i> En Almacén
-                                    </span>
+                                    <span class="badge bg-success">En Almacén</span>
                                 </c:if>
                             </td>
 
                             <td>
                                 <div class="d-flex gap-1">
+                                    <a href="${pageContext.request.contextPath}/compras/pdf/${c.compraId}" 
+                                       class="btn btn-sm btn-danger" title="Descargar PDF">
+                                        <i class="fa-solid fa-file-pdf"></i>
+                                    </a>
+
                                     <c:if test="${c.tipoDocumento == 'ORDEN_COMPRA'}">
                                         <button type="button" class="btn btn-sm btn-outline-primary" 
                                                 onclick="abrirModalFactura(${c.compraId})" title="Registrar Factura">
-                                            <i class="fa-solid fa-file-invoice-dollar"></i> Factura
+                                            <i class="fa-solid fa-file-invoice-dollar"></i>
                                         </button>
                                     </c:if>
 
@@ -111,27 +108,24 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalFactura" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalFactura" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title">Registrar Factura Física</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <h5 class="modal-title">Registrar Factura</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
-          
           <form action="${pageContext.request.contextPath}/compras/facturar" method="post">
               <div class="modal-body">
                 <input type="hidden" name="idCompra" id="modalIdCompra">
-                
                 <div class="mb-3">
-                    <label class="form-label">Número de Factura (Proveedor)</label>
+                    <label>Número de Factura Física:</label>
                     <input type="text" name="numFactura" class="form-control" required placeholder="Ej: F001-004532">
                 </div>
-                <p class="text-muted small">Al registrar la factura, la orden de compra pasará a estado oficial.</p>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary">Guardar Factura</button>
+                <button type="submit" class="btn btn-primary">Guardar</button>
               </div>
           </form>
         </div>
@@ -139,13 +133,11 @@
     </div>
 
     <script>
-        // Función JS para pasar el ID al modal
         function abrirModalFactura(id) {
             document.getElementById("modalIdCompra").value = id;
             var myModal = new bootstrap.Modal(document.getElementById('modalFactura'));
             myModal.show();
         }
     </script>
-
 </body>
 </html>
