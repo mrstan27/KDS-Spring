@@ -95,4 +95,50 @@ public class CompraController {
             pdfService.exportarOrdenCompra(response, compra);
         }
     }
+    
+ // ... código anterior ...
+
+    // ==========================================
+    //        CONTROLADOR DE COTIZACIONES
+    // ==========================================
+
+    // 1. Listar Cotizaciones
+    @GetMapping("/cotizaciones")
+    public String listarCotizaciones(Model model) {
+        model.addAttribute("listaCotizaciones", compraService.listarCotizaciones());
+        return "compra/cotizacion-listar"; // Nueva vista
+    }
+
+    // 2. Formulario Nueva Cotización
+    @GetMapping("/cotizaciones/nueva")
+    public String nuevaCotizacion(Model model) {
+        model.addAttribute("listaProveedores", proveedorService.listarTodos());
+        model.addAttribute("listaProductos", productoService.listarProductos());
+        return "compra/cotizacion-form"; // Nueva vista
+    }
+
+    // 3. Guardar Cotización (Recibe JSON)
+    @PostMapping("/cotizaciones/guardar")
+    @ResponseBody
+    public String guardarCotizacion(@RequestBody CompraDTO compraDTO, Authentication auth) {
+        try {
+            compraService.registrarCotizacion(compraDTO, auth.getName());
+            return "ok";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error";
+        }
+    }
+
+    // 4. Aprobar (Convertir a Orden)
+    @GetMapping("/cotizaciones/aprobar/{id}")
+    public String aprobarCotizacion(@PathVariable Integer id, RedirectAttributes flash) {
+        try {
+            compraService.convertirCotizacionAOrden(id);
+            flash.addFlashAttribute("success", "¡Cotización aprobada! Se ha generado la Orden de Compra #" + id);
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", "Error al aprobar: " + e.getMessage());
+        }
+        return "redirect:/compras"; // Nos manda al listado de Órdenes
+    }
 }

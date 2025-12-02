@@ -42,6 +42,11 @@
     			<div class="card-title">Compras</div>
     			<div class="card-desc">Pedidos y Recepción</div>
 			</a>
+			<a href="${pageContext.request.contextPath}/compras/cotizaciones" class="card-menu">
+    <div class="card-icon"><i class="fa-solid fa-file-contract"></i></div>
+    <div class="card-title">Cotizaciones</div>
+    <div class="card-desc">Presupuestos previos</div>
+</a>
         </c:if>
 
         <c:if test="${usuario.rol.nombreRol == 'Administrador' || usuario.rol.nombreRol == 'Almacenero'}">
