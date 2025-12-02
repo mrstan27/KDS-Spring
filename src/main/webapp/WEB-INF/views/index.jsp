@@ -76,7 +76,6 @@
                 <div class="d-flex align-items-center">
                     <a href="#" class="btn-icon-action"><i class="bi bi-search"></i></a>
                     <a href="${pageContext.request.contextPath}/login/logincliente" class="btn-icon-action" title="Cliente"><i class="bi bi-person"></i></a>
-                    <a href="${pageContext.request.contextPath}/login/loginusuario" class="btn-icon-action" title="Staff"><i class="bi bi-person-lock"></i></a>
                     <a href="#" class="btn-icon-action"><i class="bi bi-bag"></i></a>
                 </div>
             </div>
