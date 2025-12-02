@@ -113,4 +113,4 @@
     </div>
 
     <div style="text-align: center; margin-top: 30px;">
-        <button type="button" class="btn-registrar" onclick="guardarCompraFinal()" style="padding:
+        <button type="button" class="btn-registrar" onclick="guardarCompraFinal()" style="padding:>

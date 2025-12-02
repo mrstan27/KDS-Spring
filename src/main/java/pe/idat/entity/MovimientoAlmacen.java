@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Table(name = "movimientos_almacen")
 public class MovimientoAlmacen {
 
+    // ... (Ids y fechas igual que antes) ...
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "movimiento_id")
@@ -16,24 +17,31 @@ public class MovimientoAlmacen {
     private LocalDateTime fechaMovimiento = LocalDateTime.now();
 
     @Column(name = "tipo_movimiento", length = 20, nullable = false)
-    private String tipoMovimiento; // 'ENTRADA' (Compra) o 'SALIDA' (Venta)
+    private String tipoMovimiento;
 
     @Column(name = "motivo", length = 100)
-    private String motivo; // Ej: "Compra ID 5", "Venta ID 10"
+    private String motivo; 
 
-    // Relación opcional con la Compra (para trazabilidad)
+    // === CAMBIO: NUEVO CAMPO PARA LA GUÍA DE REMISIÓN ===
+    @Column(name = "numero_guia", length = 50)
+    private String numeroGuia; // Aquí guardaremos el N° de Guía física
+
+    // ... (Relaciones y Getters/Setters igual que antes) ...
     @OneToOne
     @JoinColumn(name = "compra_id_referencia", nullable = true)
     private Compra compraReferencia;
 
-    // Relación con el usuario que recepcionó
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
     public MovimientoAlmacen() {}
+
+    // ... (Resto de getters y setters) ...
+    public String getNumeroGuia() { return numeroGuia; }
+    public void setNumeroGuia(String numeroGuia) { this.numeroGuia = numeroGuia; }
     
-    // Getters y Setters...
+    // ... (Getters y Setters faltantes de ID, fecha, tipo, motivo, etc.)
     public Integer getMovimientoId() { return movimientoId; }
     public void setMovimientoId(Integer movimientoId) { this.movimientoId = movimientoId; }
     public LocalDateTime getFechaMovimiento() { return fechaMovimiento; }
