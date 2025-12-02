@@ -58,9 +58,7 @@
                     <c:forEach items="${listaCompras}" var="c">
                         <tr>
                             <td><b>#${c.compraId}</b></td>
-                            
                             <td>${c.fechaCompra.toLocalDate()}</td>
-                            
                             <td>${c.proveedor.razonSocial}</td>
                             
                             <td>
@@ -120,6 +118,7 @@
             <h5 class="modal-title">Registrar Factura Física</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
+          
           <form action="${pageContext.request.contextPath}/compras/facturar" method="post">
               <div class="modal-body">
                 <input type="hidden" name="idCompra" id="modalIdCompra">
@@ -140,6 +139,7 @@
     </div>
 
     <script>
+        // Función JS para pasar el ID al modal
         function abrirModalFactura(id) {
             document.getElementById("modalIdCompra").value = id;
             var myModal = new bootstrap.Modal(document.getElementById('modalFactura'));

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.data.domain.Sort; // Importante para el orden
+import org.springframework.data.domain.Sort;
 
 import pe.idat.dto.CompraDTO;
 import pe.idat.service.CompraService;
@@ -32,7 +32,7 @@ public class CompraController {
 
     @GetMapping
     public String listar(Model model) {
-        // Listar ordenado por ID descendente (lo último primero)
+        // Muestra las compras más recientes primero
         model.addAttribute("listaCompras", compraRepository.findAll(Sort.by(Sort.Direction.DESC, "compraId"))); 
         return "compra/listar";
     }
@@ -67,7 +67,7 @@ public class CompraController {
         return "redirect:/compras";
     }
 
-    // === NUEVO: GUARDAR FACTURA ===
+    // === EL NUEVO MÉTODO QUE TE FALTABA ===
     @PostMapping("/facturar")
     public String guardarFactura(@RequestParam Integer idCompra, @RequestParam String numFactura, RedirectAttributes flash) {
         try {

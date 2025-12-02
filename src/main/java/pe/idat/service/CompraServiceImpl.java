@@ -51,6 +51,7 @@ public class CompraServiceImpl implements CompraService {
         compra.setProveedor(proveedor);
         compra.setUsuario(usuario);
         compra.setMontoTotal(dto.getTotal().doubleValue());
+        
         compra.setEstado("Registrada");
         compra.setTipoDocumento("ORDEN_COMPRA"); 
         compra.setEstadoLogistico("PENDIENTE");
@@ -63,8 +64,10 @@ public class CompraServiceImpl implements CompraService {
             detalle.setProducto(producto);
             detalle.setCantidad(item.getCantidad());
             detalle.setPrecioCompra(item.getPrecio().doubleValue());
+            
             compra.agregarDetalle(detalle);
         }
+
         return compraRepository.save(compra);
     }
 
@@ -83,9 +86,7 @@ public class CompraServiceImpl implements CompraService {
 
         for (DetalleCompra detalle : compra.getDetalle()) {
             Producto p = detalle.getProducto();
-            int stockAntiguo = p.getStockActual();
-            int cantidadRecibida = detalle.getCantidad();
-            p.setStockActual(stockAntiguo + cantidadRecibida);
+            p.setStockActual(p.getStockActual() + detalle.getCantidad());
             productoRepository.save(p);
         }
 
@@ -94,24 +95,23 @@ public class CompraServiceImpl implements CompraService {
         mov.setTipoMovimiento("ENTRADA"); 
         mov.setMotivo("Recepción de Compra #" + compra.getCompraId() + " - Prov: " + compra.getProveedor().getRazonSocial());
         mov.setUsuario(almacenero);
-        mov.setCompraReferencia(compra); 
+        mov.setCompraReferencia(compra);
         
         movimientoRepository.save(mov);
 
         compra.setEstadoLogistico("RECIBIDO");
         compraRepository.save(compra);
     }
-
-    // === NUEVO MÉTODO PARA REGISTRAR FACTURA ===
+    
+    // === EL NUEVO MÉTODO QUE TE FALTABA ===
     @Override
     @Transactional
     public void registrarFacturaFisica(Integer compraId, String numeroFactura) {
         Compra compra = compraRepository.findById(compraId)
                 .orElseThrow(() -> new RuntimeException("Compra no encontrada"));
         
-        // Actualizamos los datos
         compra.setNumeroDocumentoFisico(numeroFactura);
-        compra.setTipoDocumento("FACTURA"); // Cambia de Orden a Factura oficial
+        compra.setTipoDocumento("FACTURA"); // Cambia el estado oficial
         
         compraRepository.save(compra);
     }
