@@ -112,5 +112,162 @@
         </div>
     </div>
 
-    <div style="text-align: center; margin-top: 30px;">
-        <button type="button" class="btn-registrar" onclick="guardarCompraFinal()" style="padding:
+   <div style="text-align: center; margin-top: 30px; margin-bottom: 30px;">
+        <button type="button" class="btn-registrar" onclick="guardarCompraFinal()" style="padding: 15px 40px; font-size: 18px;">
+            <i class="fa-solid fa-file-invoice"></i>
+        </button>
+    </div>
+</div> 
+
+   <script>
+    // Variable global para guardar la lista de productos en memoria
+    let listaItems = []; 
+
+    function agregarItem() {
+        console.log("Botón presionado..."); // Para depurar en consola (F12)
+
+        // 1. Obtener los elementos del HTML
+        let prodSelect = document.getElementById("productoSelect");
+        let costoInput = document.getElementById("costoInput");
+        let cantInput = document.getElementById("cantidadInput");
+
+        // 2. Validar que los campos existan (Seguridad)
+        if (!prodSelect || !costoInput || !cantInput) {
+            console.error("Error: No encuentro los campos del formulario.");
+            return;
+        }
+
+        // 3. Obtener valores
+        let idProd = prodSelect.value;
+        let costo = parseFloat(costoInput.value);
+        let cant = parseInt(cantInput.value);
+
+        // 4. Validaciones de Datos
+        if (!idProd || idProd === "") {
+            alert("⚠️ Por favor, selecciona un Producto.");
+            return;
+        }
+        if (isNaN(costo) || costo <= 0) {
+            alert("⚠️ El costo debe ser un valor válido mayor a 0.");
+            return;
+        }
+        if (isNaN(cant) || cant <= 0) {
+            alert("⚠️ La cantidad debe ser un número entero mayor a 0.");
+            return;
+        }
+
+        // 5. Obtener el nombre del producto (truco del atributo data-nombre)
+        let opcion = prodSelect.options[prodSelect.selectedIndex];
+        let nombreProd = opcion.getAttribute("data-nombre") || opcion.text;
+
+        // 6. Crear el objeto item
+        let subtotal = costo * cant;
+        let item = {
+            productoId: parseInt(idProd),
+            nombre: nombreProd,
+            precio: costo,
+            cantidad: cant,
+            subtotal: subtotal
+        };
+
+        // 7. Guardar y Actualizar Tabla
+        listaItems.push(item);
+        actualizarTabla();
+
+        // 8. Limpiar formulario para el siguiente
+        costoInput.value = "";
+        cantInput.value = "";
+        prodSelect.value = "";
+        prodSelect.focus();
+    }
+
+    function eliminarItem(indice) {
+        listaItems.splice(indice, 1); // Borra el elemento del array
+        actualizarTabla(); // Redibuja la tabla
+    }
+
+    function actualizarTabla() {
+        let cuerpo = document.getElementById("tablaCuerpo");
+        let mensaje = document.getElementById("mensajeVacio");
+        let totalSpan = document.getElementById("totalTexto");
+        
+        // Limpiamos la tabla visualmente
+        cuerpo.innerHTML = ""; 
+        let sumaTotal = 0;
+
+        if (listaItems.length === 0) {
+            mensaje.style.display = "block";
+        } else {
+            mensaje.style.display = "none";
+            
+            // Recorremos la lista y creamos las filas HTML
+            listaItems.forEach((item, index) => {
+                sumaTotal += item.subtotal;
+                
+                let fila = `
+                    <tr>
+                        <td>\${item.nombre}</td>
+                        <td style="text-align: center;">\${item.cantidad}</td>
+                        <td style="text-align: right;">S/ \${item.precio.toFixed(2)}</td>
+                        <td style="text-align: right;">S/ \${item.subtotal.toFixed(2)}</td>
+                        <td style="text-align: center;">
+                            <button type="button" onclick="eliminarItem(\${index})" 
+                                    style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                cuerpo.innerHTML += fila;
+            });
+        }
+        
+        // Actualizamos el total global
+        totalSpan.innerText = sumaTotal.toFixed(2);
+    }
+
+    function guardarCompraFinal() {
+        // Validar antes de enviar
+        let idProv = document.getElementById("proveedorSelect").value;
+        if (!idProv) {
+            alert("⚠️ Debe seleccionar un Proveedor.");
+            return;
+        }
+        if (listaItems.length === 0) {
+            alert("⚠️ La lista de productos está vacía.");
+            return;
+        }
+
+        // Armar el paquete de datos (JSON)
+        let compraDTO = {
+            proveedorId: parseInt(idProv),
+            total: parseFloat(document.getElementById("totalTexto").innerText),
+            items: listaItems // Java espera una lista de DetalleDTO
+        };
+
+        // Enviar al servidor (AJAX)
+        fetch('${pageContext.request.contextPath}/compras/guardar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // El token CSRF es necesario si Spring Security está activo y validando CSRF
+                'X-CSRF-TOKEN': '${_csrf.token}' 
+            },
+            body: JSON.stringify(compraDTO)
+        })
+        .then(response => response.text())
+        .then(texto => {
+            if (texto === "ok") {
+                alert("✅ ¡Orden Generada Exitosamente!\nEl stock no cambiará hasta confirmar la recepción.");
+                window.location.href = "${pageContext.request.contextPath}/compras";
+            } else {
+                alert("❌ Error al guardar la orden. Intente nuevamente.");
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Error de conexión con el servidor.");
+        });
+    }
+</script>
+   </body>

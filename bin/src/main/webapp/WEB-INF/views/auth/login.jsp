@@ -8,49 +8,27 @@
     <title>Iniciar Sesión - Kids Made Here</title>
     <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/registro-estilo.css">
     <style>
-        /* Estilos específicos para el Login con Fondo */
         body {
-            /* Establecemos la imagen como fondo */
-            background-image: url('${pageContext.request.contextPath}/images/fondo_tienda.jpg'); /* Asegúrate de que la ruta y nombre sean correctos */
-            background-size: cover; /* La imagen cubrirá todo el fondo, recortándose si es necesario */
-            background-position: center; /* Centramos la imagen */
-            background-repeat: no-repeat; /* Evitamos que se repita */
-            background-attachment: fixed; /* El fondo se queda fijo al hacer scroll */
-            
-            /* Mantenemos el centrado del formulario */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            font-family: 'Segoe UI', sans-serif; /* Aseguramos la fuente */
+            background-image: url('${pageContext.request.contextPath}/images/fondo_tienda.jpg');
+            background-size: cover; background-position: center;
+            background-repeat: no-repeat; background-attachment: fixed;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif;
         }
-
         .login-card {
-            background-color: rgba(255, 255, 255, 0.95); /* Fondo blanco semi-transparente para que resalte el formulario */
-            width: 350px;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2); /* Sombra más pronunciada para dar profundidad */
-            text-align: center;
+            background-color: rgba(255, 255, 255, 0.95);
+            width: 350px; padding: 40px; border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center;
         }
-
-        /* Ajuste pequeño para el título */
-        .registro-header h2 {
-            color: #c0392b;
-            margin-bottom: 10px;
-        }
-        
-        .header-separator {
-             margin-bottom: 30px;
-        }
+        .registro-header h2 { color: #c0392b; margin-bottom: 10px; }
+        .header-separator { margin-bottom: 30px; }
     </style>
 </head>
 <body>
 
 <div class="login-card">
     <div class="registro-header">
-        <h2>Bienvenido</h2>
+        <h2>Acceso Staff</h2>
         <hr class="header-separator">
     </div>
 
@@ -67,24 +45,25 @@
     </c:if>
 
     <form action="${pageContext.request.contextPath}/login" method="post">
-        
         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+        
+        <input type="hidden" name="tipoAcceso" value="admin"/> 
 
         <div class="form-group">
             <label class="form-label" style="text-align: left;">Correo Electrónico</label>
-            <input type="email" name="email" class="form-input" required placeholder="ejemplo@correo.com"/>
+            <input type="email" name="email" class="form-input" required placeholder="admin@empresa.com"/>
         </div>
 
         <div class="form-group">
-            <label for="password" class="form-label" style="text-align: left;">Contraseña</label>
-            <input type="password" name="password" class="form-input" spellcheck= "false" required placeholder="******"/>
+            <label class="form-label" style="text-align: left;">Contraseña</label>
+            <input type="password" name="password" class="form-input" required placeholder="******"/>
         </div>
 
         <button type="submit" class="btn-registrar">Ingresar</button>
     </form>
     
     <div style="margin-top: 25px; font-size: 14px; color: #666;">
-        ¿No tienes cuenta? <br> <span style="color: #c0392b; font-weight: bold;">Contacta al administrador</span>
+        ¿Problemas de acceso? <br> <span style="color: #c0392b; font-weight: bold;">Contacta a TI</span>
     </div>
 </div>
 

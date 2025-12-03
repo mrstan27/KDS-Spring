@@ -16,18 +16,6 @@
             <h2>Hola, ${usuario.nombre} ${usuario.apellido}</h2>
             <span>Rol: <strong>${usuario.rol.nombreRol}</strong></span>
         </div>
-        <a href="${pageContext.request.contextPath}/proveedor/lista" class="btn-logout">
-            <i class="fa-solid fa-power-off"></i> Proveedores
-        </a>
-        <a href="${pageContext.request.contextPath}/roles" class="btn-logout">
-            <i class="fa-solid fa-power-off"></i> Roles
-        </a>
-        <a href="${pageContext.request.contextPath}/usuarios" class="btn-logout">
-            <i class="fa-solid fa-power-off"></i> Usuarios
-        </a>
-        <a href="${pageContext.request.contextPath}/cliente/listar" class="btn-logout">
-            <i class="fa-solid fa-power-off"></i> Clientes
-        </a>
         <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
             <i class="fa-solid fa-power-off"></i> Cerrar Sesión
         </a>
@@ -54,6 +42,11 @@
     			<div class="card-title">Compras</div>
     			<div class="card-desc">Pedidos y Recepción</div>
 			</a>
+			<a href="${pageContext.request.contextPath}/compras/cotizaciones" class="card-menu">
+    <div class="card-icon"><i class="fa-solid fa-file-contract"></i></div>
+    <div class="card-title">Cotizaciones</div>
+    <div class="card-desc">Presupuestos previos</div>
+</a>
         </c:if>
 
         <c:if test="${usuario.rol.nombreRol == 'Administrador' || usuario.rol.nombreRol == 'Almacenero'}">
@@ -63,13 +56,13 @@
                 <div class="card-desc">Catálogo de prendas</div>
             </a>
 
-            <a href="${pageContext.request.contextPath}/proveedores" class="card-menu">
+            <a href="${pageContext.request.contextPath}/proveedor/lista" class="card-menu">
                 <div class="card-icon"><i class="fa-solid fa-truck"></i></div>
                 <div class="card-title">Proveedores</div>
                 <div class="card-desc">Gestión de abastecimiento</div>
             </a>
             
-            <a href="${pageContext.request.contextPath}/almacen/movimientos" class="card-menu">
+            <a href="#" class="card-menu">
                 <div class="card-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
                 <div class="card-title">Movimientos</div>
                 <div class="card-desc">Entradas y salidas</div>
@@ -77,7 +70,7 @@
         </c:if>
 
         <c:if test="${usuario.rol.nombreRol == 'Administrador' || usuario.rol.nombreRol == 'Vendedor'}">
-            <a href="${pageContext.request.contextPath}/ventas/nueva" class="card-menu">
+            <a href="#" class="card-menu">
                 <div class="card-icon"><i class="fa-solid fa-cash-register"></i></div>
                 <div class="card-title">Nueva Venta</div>
                 <div class="card-desc">Registrar salida de mercadería</div>

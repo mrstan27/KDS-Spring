@@ -1,5 +1,9 @@
 package pe.idat.init;
 
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,10 +17,6 @@ import pe.idat.repository.CategoriaRepository;
 import pe.idat.repository.ProductoRepository;
 import pe.idat.repository.RolRepository;
 import pe.idat.repository.UsuarioRepository;
-
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -35,37 +35,27 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired 
     private ProductoRepository productoRepository;
-    
+
+    // --- Variables para la búsqueda de categorías (se llenarán al inicio) ---
+    private List<Categoria> todasLasCategorias;
+
     @Override
     public void run(String... args) throws Exception {
         
-        // --- 1. CREAR ROLES ---
-        // Validamos si existen roles, si no, los creamos.
+        // --- 1. CREAR ROLES y USUARIO ADMIN (Lógica sin cambios) ---
         Rol rolAdmin = null;
         List<Rol> roles = rolRepository.findAll();
         
         if (roles.isEmpty()) {
-            rolAdmin = new Rol(); rolAdmin.setNombreRol("Administrador");
-            rolRepository.save(rolAdmin);
-            
-            Rol rolVendedor = new Rol(); rolVendedor.setNombreRol("Vendedor");
-            rolRepository.save(rolVendedor);
-            
-            Rol rolAlmacenero = new Rol(); rolAlmacenero.setNombreRol("Almacenero");
-            rolRepository.save(rolAlmacenero);
-            
+            rolAdmin = new Rol(); rolAdmin.setNombreRol("Administrador"); rolRepository.save(rolAdmin);
+            Rol rolVendedor = new Rol(); rolVendedor.setNombreRol("Vendedor"); rolRepository.save(rolVendedor);
+            Rol rolAlmacenero = new Rol(); rolAlmacenero.setNombreRol("Almacenero"); rolRepository.save(rolAlmacenero);
             System.out.println("✅ Roles creados correctamente.");
         } else {
-            // Buscamos el rol Administrador para usarlo abajo
-            rolAdmin = roles.stream()
-                    .filter(r -> r.getNombreRol().equals("Administrador"))
-                    .findFirst()
-                    .orElse(null);
+            rolAdmin = roles.stream().filter(r -> r.getNombreRol().equals("Administrador")).findFirst().orElse(null);
             System.out.println("☑️ Los roles ya existen.");
         }
 
-        // --- 2. CREAR USUARIO ADMIN ---
-        // Validamos si existe el email, si no, lo creamos.
         if (usuarioRepository.findByEmail("admin@admin.com").isEmpty() && rolAdmin != null) {
             Usuario admin = new Usuario();
             admin.setNombre("Super");
@@ -74,80 +64,288 @@ public class DataInitializer implements CommandLineRunner {
             admin.setPasswordHash(passwordEncoder.encode("123456"));
             admin.setActivo(true);
             admin.setRol(rolAdmin);
-
             usuarioRepository.save(admin);
             System.out.println("😎 Usuario ADMIN creado: admin@admin.com / 123456");
         } else {
-            // AQUÍ ESTÁ EL MENSAJE QUE FALTABA
             System.out.println("☑️ El usuario ADMIN ya existe.");
         }
 
-        // --- 3. CREAR CATEGORÍAS (KIDS MADE HERE) ---
-        // Validamos si hay categorías, si la tabla está vacía, las creamos.
+        // --- 2. CREAR CATEGORÍAS ---
         if (categoriaRepository.count() == 0) {
             List<String> nombresCategorias = Arrays.asList(
-                "NEW IN", 
-                "NITE OUT", 
-                "OUTERWEAR", 
-                "ROPA", 
-                "JEANS", 
-                "POLOS", 
-                "BLACK SUNDAY", 
-                "ACCESORIOS"
+                "NEW IN", "NITE OUT", "OUTERWEAR", "ROPA", "JEANS", "POLOS", "BLACK SUNDAY", "ACCESORIOS"
             );
-
-            for (String nombre : nombresCategorias) {
+            nombresCategorias.forEach(nombre -> {
                 Categoria cat = new Categoria();
                 cat.setNombreCategoria(nombre);
                 categoriaRepository.save(cat);
-            }
+            });
             System.out.println("👕 Categorías de KIDS creadas automáticamente.");
         } else {
             System.out.println("☑️ Las categorías ya existen.");
         }
         
-        if (productoRepository.count() == 0) {
-            
-            // Buscamos la categoría JEANSs
-            Categoria catJeans = categoriaRepository.findAll().stream()
-                .filter(c -> c.getNombreCategoria().equals("JEANS")).findFirst().orElse(null);
+        // Cargar todas las categorías para uso rápido en el paso 3
+        this.todasLasCategorias = categoriaRepository.findAll();
 
-            if (catJeans != null) {
-                // DATOS: { "Nombre", "Descripción", "Precio", "NombreArchivo" }
-                String[][] misJeans = {
-                    {"Jean Skinny Blue", "Jean ajustado color azul clásico, tela stretch premium.", "89.90", "jean1.webp"},
-                    {"Jean Cargo Black", "Estilo urbano con bolsillos laterales funcionales.", "119.90", "jean2.webp"},
-                    {"Jean Mom Fit Roto", "Corte alto y relajado con detalles rasgados.", "99.90", "jean3.jpg"},
-                    {"Jean Wide Leg Ice", "Pantalón de pierna ancha color hielo, tendencia 2025.", "109.90", "jean4.jpg"},
-                    {"Jogger Denim", "La comodidad de un buzo con el estilo de un jean.", "79.90", "jean5.webp"},
-                    {"Jean Carpenter", "Estilo carpintero con costuras visibles y corte recto.", "129.90", "jean6.webp"},
-                    {"Jean Baggy 90s", "Estilo retro ancho, lavado oscuro vintage.", "109.90", "jean7.webp"},
-                    {"Jean Slim Negro", "Básico indispensable, corte slim fit color negro sólido.", "89.90", "jean8.webp"},
-                    {"Jean Acid Wash", "Lavado ácido ochentero, corte relajado.", "95.90", "jean9.webp"},
-                    {"Jean Recto Clásico", "El corte que nunca pasa de moda, azul medio.", "79.90", "jean10.webp"}
-                };
+        // --- 3. CREAR PRODUCTOS POR CATEGORÍA (DETALLADO Y ESPECÍFICO) ---
 
-                for (String[] datos : misJeans) {
-                    Producto p = new Producto();
-                    // Usamos tus Setters exactos
-                    p.setNombre(datos[0]);
-                    p.setDescripcion(datos[1]);
-                    p.setPrecioVenta(new BigDecimal(datos[2])); // Convertimos String a BigDecimal
-                    p.setStockActual(50); 
-                    p.setCategoria(catJeans);
-                    
-                    // Aquí guardamos la ruta relativa
-                    p.setImagenUrl("jeans/" + datos[3]); 
-                    
-                    productoRepository.save(p);
-                }
-                System.out.println("👖 Se cargaron los 10 JEANS de prueba exitosamente.");
+        // A. CATEGORÍA JEANS (10 ítems)
+        crearProductosDetallados("JEANS", "jeans", 
+            new String[][] {
+                {"Jean Skinny Blue", "Jean ajustado color azul clásico, tela stretch premium.", "89.90"}, // 1
+                {"Jean Cargo Black", "Estilo urbano con bolsillos laterales funcionales.", "119.90"}, // 2
+                {"Jean Mom Fit Roto", "Corte alto y relajado con detalles rasgados.", "99.90"}, // 3
+                {"Jean Wide Leg Ice", "Pantalón de pierna ancha color hielo, tendencia 2025.", "109.90"}, // 4
+                {"Jogger Denim", "La comodidad de un buzo con el estilo de un jean.", "79.90"}, // 5
+                {"Jean Carpenter", "Estilo carpintero con costuras visibles y corte recto.", "129.90"}, // 6
+                {"Jean Baggy 90s", "Estilo retro ancho, lavado oscuro vintage.", "109.90"}, // 7
+                {"Jean Slim Negro", "Básico indispensable, corte slim fit color negro sólido.", "89.90"}, // 8
+                {"Jean Acid Wash", "Lavado ácido ochentero, corte relajado.", "95.90"}, // 9
+                {"Jean Recto Clásico", "El corte que nunca pasa de moda, azul medio.", "79.90"} // 10
             }
-            
-            
-            
-        } else {
-             System.out.println("☑️ Los productos ya existen en la BD.");
-        }
+        );
+
+        // B. CATEGORÍA OUTERWEAR (15 ítems)
+        crearProductosDetallados("OUTERWEAR", "outerwear", 
+            new String[][] {
+                {"Top con Botones Rosado", "Top tejido con botones frontales, manga corta.", "45.90"}, // 1 (out1.webp)
+                {"Sudadera 'Catch Latte'", "Sudadera blanca oversized con estampado de texto.", "85.90"}, // 2 (out2.webp)
+                {"Blusa Hombros Caídos Pink", "Escote Bardot, tejido acanalado suave.", "59.90"}, // 3 (out3.webp)
+                {"Sudadera Navy Estampada", "Sudadera azul marino con texto blanco y hombros caídos.", "79.90"}, // 4 (out4.webp)
+                {"Crop Top Rayas Baby Blue", "Top corto a rayas horizontales, manga 3/4.", "49.90"}, // 5 (out5.webp)
+                {"Camisa Oversize Blanca", "Camisa de botones que puede usarse como chaqueta ligera.", "95.90"}, // 6 (out6.webp)
+                {"Chaqueta de Mezclilla Camuflaje", "Cazadora denim con patrón de camuflaje.", "135.90"}, // 7 (out7.webp)
+                {"Blusa Hombros Caídos Blanca", "Escote Bardot, tejido ligero.", "59.90"}, // 8 (out8.webp)
+                {"Top Crochet Manga Larga", "Top tejido a mano con diseño de flores, ajuste slim.", "89.90"}, // 9 (out9.webp)
+                {"Top Acanalado Celeste", "Top de tirantes finos con tejido rib, escote cuadrado.", "39.90"}, // 10 (out10.webp)
+                {"Chaqueta Negra con Capucha", "Sudadera con cremallera y capucha, estilo deportivo.", "99.90"}, // 11 (out11.webp)
+                {"Jersey Blanco Calado", "Jersey de punto con patrón de encaje, manga larga.", "110.90"}, // 12 (out12.webp)
+                {"Sudadera 'Love' con Capucha", "Sudadera beige con estampado frontal y gorro.", "85.90"}, // 13 (out13.webp)
+                {"Blazer de Verano Azul Marino", "Chaqueta formal ligera, ideal para un look casual.", "129.90"}, // 14 (out14.webp)
+                {"Top Cruzado Beige Tejido", "Top corto tejido a crochet, cierre frontal cruzado.", "75.90"} // 15 (out15.webp)
+            }
+        );
+
+        // C. CATEGORÍA NITE OUT (15 ítems)
+        crearProductosDetallados("NITE OUT", "nite_out", 
+            new String[][] {
+                {"Vestido Mini Satín Negro", "Vestido corto de tirantes finos, acabado satinado, perfecto para noche.", "135.90"}, // 1 (nite1.webp)
+                {"Top Halter de Malla Negro", "Top tipo halter, tejido de red con forro, ajuste al cuello.", "79.90"}, // 2 (nite2.webp)
+                {"Bralette Encaje Vino", "Top de lencería en color vino con detalles de encaje.", "65.90"}, // 3 (nite3.webp)
+                {"Top Crop de Lino Blanco", "Top básico corto, ideal para combinar con jeans de tiro alto.", "45.90"}, // 4 (nite4.webp)
+                {"Top con Nudo en Espalda Negro", "Top corto con diseño de lazo o nudo en la espalda.", "69.90"}, // 5 (nite5.webp)
+                {"Minifalda de Volantes Negra", "Falda corta de tiro alto con mini volantes en el bajo.", "75.90"}, // 6 (nite6.webp)
+                {"Vestido Tubo Corsé Negro", "Vestido corto ajustado estilo corsé, silueta ceñida.", "149.90"}, // 7 (nite7.webp)
+                {"Top Bandeau Botones Negro", "Top sin tirantes con botones frontales decorativos, estilo bandeau.", "59.90"}, // 8 (nite8.webp)
+                {"Vestido Mini Asimétrico Negro", "Vestido corto con un solo tirante, corte ajustado.", "129.90"}, // 9 (nite9.webp)
+                {"Top Crop Tirantes Spaghetti", "Top corto básico de tirantes muy finos, color negro.", "39.90"}, // 10 (nite10.webp)
+                {"Top Espalda Descubierta Rosa", "Top corto con escote pronunciado en la espalda, tejido suave.", "55.90"}, // 11 (nite11.webp)
+                {"Vestido Blazer Vino", "Vestido de corte blazer con solapas, cruzado en color vino.", "179.90"}, // 12 (nite12.webp)
+                {"Vestido Cut Out con Cadena", "Vestido negro con aberturas y detalle de cadena metálica en el cuello.", "165.90"}, // 13 (nite13.webp)
+                {"Top Corsé Manga Larga Vino", "Top estilo corsé en tela de red, manga larga y color vino.", "85.90"}, // 14 (nite14.webp)
+                {"Top Crop Acanalado Gris", "Top corto acanalado de manga corta, cuello redondo.", "42.90"} // 15 (nite15.webp)
+            }
+        );
+
+        // D. CATEGORÍA POLOS (15 ítems)
+        crearProductosDetallados("POLOS", "polos", 
+            new String[][] {
+                {"Polo Gráfico 'Goth'", "Polo negro corto con estampado de calavera/texto en blanco.", "49.90"}, // 1 (polos1.webp)
+                {"Polo Gráfico '55' Brillante", "Polo crop con gráfico '55' y detalles brillantes en el frente.", "55.90"}, // 2 (polos2.webp)
+                {"Polo Hombros Caídos Menta", "Polo manga corta, escote Bardot, color verde menta.", "45.90"}, // 3 (polos3.webp)
+                {"Polo Tirantes Fruncido Amarillo", "Top de tirantes finos con detalle fruncido en el escote, color pastel.", "42.90"}, // 4 (polos4.webp)
+                {"Polo Hombros Caídos Marrón", "Polo manga corta, escote Bardot, color chocolate.", "45.90"}, // 5 (polos5.webp)
+                {"Polo Hombros Descubiertos Negro", "Top negro de corte asimétrico con un hombro descubierto.", "47.90"}, // 6 (polos6.webp)
+                {"Polo Gráfico 'Snake' Negro", "Polo negro holgado con estampado gráfico de serpiente.", "59.90"}, // 7 (polos7.webp)
+                {"Polo Gráfico 'See You in Rome'", "Polo blanco con estampado de texto y cuello redondo.", "51.90"}, // 8 (polos8.webp)
+                {"Polo Gráfico 'California'", "Polo blanco con estampado de universidad/destino, corte crop.", "54.90"}, // 9 (polos9.webp)
+                {"Polo Crop 'Deer' Blanco", "Polo corto blanco con pequeño estampado animal y texto.", "48.90"}, // 10 (polos10.webp)
+                {"Polo Gráfico 'New York'", "Polo negro con letras en color mostaza, estilo urbano.", "56.90"}, // 11 (polos11.webp)
+                {"Polo Rib con Ribete Navy", "Polo ajustado acanalado, cuello y mangas con borde en color oscuro.", "43.90"}, // 12 (polos12.webp)
+                {"Top Asimétrico Blanco Simple", "Top básico de un solo hombro, tirante ancho.", "39.90"}, // 13 (polos13.webp)
+                {"Polo Gráfico Minimalista", "Polo blanco simple con un pequeño gráfico o texto bordado.", "46.90"}, // 14 (polos14.webp)
+                {"Polo 'Back Design'", "Polo que destaca por un estampado grande en la espalda.", "59.90"} // 15 (polos15.webp)
+            }
+        );
+        
+        // E. CATEGORÍA NEW IN (15 ítems)
+        crearProductosDetallados("NEW IN", "new_in", 
+            new String[][] {
+                {"Top Crop Floral", "Top blanco con estampado floral, manga corta y cuello redondo.", "45.90"}, // 1 (new1.webp)
+                {"Top de Tirantes Rosa Liso", "Top lencero de tirantes finos, cuello V y ajuste holgado.", "39.90"}, // 2 (new2.webp)
+                {"Top Fruncido con Lazo", "Top corto rosa de tirantes con ajuste fruncido frontal y lazo.", "49.90"}, // 3 (new3.webp)
+                {"Bralette Negro Básico", "Top corto negro de tirantes anchos, ideal para capas.", "29.90"}, // 4 (new4.webp)
+                {"Bralette Negro Tirante Fino", "Top corto negro de tirantes muy finos, ajuste ceñido.", "27.90"}, // 5 (new5.webp)
+                {"T-shirt Crop Vintage", "Camiseta corta blanca con estampado de texto en rojo.", "55.90"}, // 6 (new6.webp)
+                {"Top Banda de Botones", "Top tipo banda con botones frontales, estilo corset ligero.", "42.90"}, // 7 (new7.webp)
+                {"Top Lencero de Espalda Cruzada", "Top de tirantes finos con detalles cruzados en la espalda.", "35.90"}, // 8 (new8.webp)
+                {"Minifalda Volantes Azul", "Falda corta con volantes y patrón discreto, estilo juvenil.", "65.90"}, // 9 (new9.webp)
+                {"T-shirt Gráfico Rock", "Camiseta negra estampada con motivos musicales/gráficos.", "59.90"}, // 10 (new10.webp)
+                {"T-shirt Crop Militar", "Camiseta corta con estampado de camuflaje y cuello redondo.", "57.90"}, // 11 (new11.webp)
+                {"Top Hombros Caídos Amarillo", "Top con detalle de volantes en el hombro, color pastel.", "48.90"}, // 12 (new12.webp)
+                {"Jeans Rectos Lavado Claro", "Pantalón jean de corte recto, lavado muy claro.", "109.90"}, // 13 (new13.webp)
+                {"Top Hombros Descubiertos Marrón", "Top acanalado de manga corta, escote Bardot, color tierra.", "44.90"}, // 14 (new14.webp)
+                {"Top Hombros Descubiertos Negro", "Top acanalado de manga corta, escote Bardot, color negro.", "44.90"} // 15 (new15.webp)
+            }
+        );
+
+        // F. CATEGORÍA ROPA (15 ítems - Se asume Ropa Interior/Básicos/Vestidos)
+        crearProductosDetallados("ROPA", "ropa", 
+            new String[][] {
+                {"Short de Jean Tiro Alto Claro", "Pantalón corto de mezclilla tiro alto, lavado claro.", "69.90"}, // 1 (ropa1.webp)
+                {"Short de Lino Crema", "Pantalón corto de tela de lino, cordón ajustable en la cintura.", "55.90"}, // 2 (ropa2.webp)
+                {"Short de Jean Clásico Azul", "Pantalón corto de mezclilla, corte recto y tiro medio.", "65.90"}, // 3 (ropa3.webp)
+                {"Short de Jean Ultra Corto", "Pantalón corto de mezclilla muy corto, estilo playero.", "59.90"}, // 4 (ropa4.webp)
+                {"Minifalda Negra de Tubo", "Falda muy corta, ajustada y lisa, ideal para salir.", "75.90"}, // 5 (ropa5.webp)
+                {"Top con Espalda Abierta", "Top básico que destaca por su diseño de lazo o abertura en la espalda.", "49.90"}, // 6 (ropa6.webp)
+                {"Falda Midi Negra", "Falda de largo medio, corte fluido y color negro.", "89.90"}, // 7 (ropa7.webp)
+                {"Top Bandeau con Cadena", "Top strapless negro con detalle de cadena en el abdomen.", "62.90"}, // 8 (ropa8.webp)
+                {"Polo Gráfico 'Rock Music'", "Polo negro con estampado de banda, corte crop.", "59.90"}, // 9 (ropa9.webp)
+                {"Polo Crop Gráfico '55'", "Polo corto blanco con diseño deportivo '55'.", "55.90"}, // 10 (ropa10.webp)
+                {"Top Hombros Caídos Verde Menta", "Top acanalado de manga corta, escote Bardot.", "48.90"}, // 11 (ropa11.webp)
+                {"Top Lencero Drapeado Menta", "Top de tirantes finos con detalle drapeado frontal.", "51.90"}, // 12 (ropa12.webp)
+                {"Top Tejido con Nudo Frontal", "Top de tirantes color rosa viejo, con lazo o nudo ajustable.", "53.90"}, // 13 (ropa13.webp)
+                {"Top Lencero Básico Beige", "Top de tirantes finos, acabado en satín o seda, color nude.", "40.90"}, // 14 (ropa14.webp)
+                {"Polo Crop Estampado Sencillo", "Polo blanco corto con estampado o logo discreto.", "49.90"} // 15 (ropa15.webp)
+            }
+        );
+        
+        // G. CATEGORÍA ACCESORIOS (15 ítems)
+        crearProductosDetallados("ACCESORIOS", "accesorios", 
+            new String[][] {
+                {"Bolso Bandolera Vinotinto", "Bolso pequeño con tachuelas y correa larga.", "69.90"}, // 1 (accesorios1.webp)
+                {"Cinturón Estampado Piel", "Cinturón de cuero con diseño de animales.", "45.90"}, // 2 (accesorios2.webp)
+                {"Cinturón Delgado Beige", "Cinturón fino de cuero sintético con hebilla dorada.", "35.90"}, // 3 (accesorios3.webp)
+                {"Collar Cadena Fina Simple", "Cadena delicada dorada con dije minimalista.", "29.90"}, // 4 (accesorios4.webp)
+                {"Minibolso Blanco Cruzado", "Bolso pequeño de hombro, ideal para el día a día.", "59.90"}, // 5 (accesorios5.webp)
+                {"Pulsera Cadena Esclava", "Pulsera fina de cadena en plata/acero.", "25.90"}, // 6 (accesorios6.webp)
+                {"Collar Cuentas Blancas", "Collar de cuentas pequeñas, estilo veraniego.", "32.90"}, // 7 (accesorios7.webp)
+                {"Set Anillos Finos Dorados", "Anillos apilables con diseños sencillos.", "49.90"}, // 8 (accesorios8.webp)
+                {"Anillo de Sello Simple", "Anillo grueso con diseño geométrico minimalista.", "39.90"}, // 9 (accesorios9.webp)
+                {"Pulsera Trenzada Fina", "Pulsera de hilo con detalle metálico.", "22.90"}, // 10 (accesorios10.webp)
+                {"Pendientes Botón Dorado", "Aretes pequeños de botón, elegantes y versátiles.", "19.90"}, // 11 (accesorios11.webp)
+                {"Flor para el Cabello (Clavel)", "Accesorio floral para peinados, color amarillo.", "15.90"}, // 12 (accesorios12.webp)
+                {"Cinturón Ancho de Piel", "Cinturón grande para ceñir vestidos o camisas.", "55.90"}, // 13 (accesorios13.webp)
+                {"Llavero Navaja Rosa", "Llavero decorativo con forma de navaja plegable.", "24.90"}, // 14 (accesorios14.webp)
+                {"Gorro Beanie de Punto", "Gorro de lana suave en color crema o beige.", "39.90"} // 15 (accesorios15.webp)
+            }
+        );
+
+        // H. CATEGORÍA BLACK SUNDAY (15 ítems)
+        // Se asume que la carpeta real es 'rebajas', por eso se cambia el segundo argumento.
+        crearProductosDetallados("BLACK SUNDAY", "rebajas", 
+            new String[][] {
+                {"Polo Manga Larga Celeste", "Top acanalado de manga larga, cuello redondo y ajuste slim, color pastel.", "49.90"}, // 1 (rebajas1.webp)
+                {"Top Hombros Caídos Negro", "Top acanalado de manga larga, escote Bardot, color negro sólido.", "54.90"}, // 2 (rebajas2.webp)
+                {"Vestido Maxi Tubo Navy", "Vestido largo ajustado, hombros caídos, ideal para un look casual.", "119.90"}, // 3 (rebajas3.webp)
+                {"Chaqueta Corta Denim", "Chaqueta vaquera corta, con botones, estilo juvenil.", "99.90"}, // 4 (rebajas4.webp)
+                {"Pantalón Ancho Beige Lino", "Pantalón palazzo de tiro alto, caída fluida, tejido de lino.", "85.90"}, // 5 (rebajas5.webp)
+                {"Jean Flare Clásico", "Jean ajustado hasta la rodilla y acampanado en el bajo, lavado azul medio.", "105.90"}, // 6 (rebajas6.webp)
+                {"Pantalón Slim Vinotinto", "Pantalón ajustado de color borgoña, ideal para looks de oficina.", "79.90"}, // 7 (rebajas7.webp)
+                {"Top Fruncido Manga Larga", "Top blanco acanalado, fruncido en el abdomen con lazos.", "45.90"}, // 8 (rebajas8.webp)
+                {"Chaqueta Puffer Azul Marino", "Abrigo acolchado y voluminoso, cuello alto, ideal para invierno.", "149.90"}, // 9 (rebajas9.webp)
+                {"Pantalón Campana Negro", "Pantalón ajustado, acampanado, tejido elástico negro.", "89.90"}, // 10 (rebajas10.webp)
+                {"Chaqueta Tipo Sudadera Azul", "Chaqueta casual con cremallera y capucha, color azul marino.", "75.90"}, // 11 (rebajas11.webp)
+                {"Falda Midi Asimétrica Verde", "Falda larga con volantes y corte asimétrico, estilo bohemio.", "95.90"}, // 12 (rebajas12.webp)
+                {"Jean Skinny Etiqueta Roja", "Jean ajustado con etiqueta decorativa visible.", "79.90"}, // 13 (rebajas13.webp)
+                {"Minifalda Negra Eco-Cuero", "Falda muy corta de tiro alto, acabado en polipiel.", "69.90"}, // 14 (rebajas14.webp)
+                {"Top Hombros Caídos Mostaza", "Top de manga larga con escote Bardot, color amarillo mostaza.", "52.90"} // 15 (rebajas15.webp)
+            }
+        );
+        
+        System.out.println("🎉 Todos los productos de prueba fueron cargados detalladamente. Total de productos: " + productoRepository.count());
     }
- }
+
+    // --- FUNCIÓN AUXILIAR DE SOPORTE ---
+    
+    /**
+     * Busca la categoría por nombre en la lista precargada.
+     */
+    private Categoria buscarCategoria(String nombre) {
+        return this.todasLasCategorias.stream()
+            .filter(c -> c.getNombreCategoria().equals(nombre))
+            .findFirst()
+            .orElse(null);
+    }
+
+    /**
+     * Crea y guarda productos detallados en la BD, APLICANDO LA LÓGICA DEL PREFIJO
+     * para asegurar que las URLs de imagen sean correctas (ej: 'outerwear/out1.webp').
+     */
+    private void crearProductosDetallados(String nombreCategoria, String subDirectorio, String[][] productosData) {
+        
+        // Solo ejecuta si la tabla para esta categoría está vacía
+        if (!productoRepository.findByCategoria_NombreCategoria(nombreCategoria).isEmpty()) {
+            System.out.println("☑️ Productos de " + nombreCategoria + " ya existen.");
+            return;
+        }
+        
+        Categoria categoria = buscarCategoria(nombreCategoria);
+        if (categoria == null) {
+            System.err.println("❌ ERROR: No se puede crear productos. Categoría '" + nombreCategoria + "' no encontrada.");
+            return;
+        }
+        
+        // Iteramos sobre los datos específicos y los guardamos
+        for (int i = 0; i < productosData.length; i++) { // <-- INICIO DEL CICLO FOR
+            String[] datos = productosData[i];
+            
+            Producto p = new Producto();
+            p.setNombre(datos[0]);
+            p.setDescripcion(datos[1]);
+            p.setPrecioVenta(new BigDecimal(datos[2])); 
+            p.setStockActual(50); // Stock base
+            p.setCategoria(categoria);
+            
+            // =========================================================================
+            // 🔑 LÓGICA DE PREFIJOS DE IMAGEN CORREGIDA
+            // =========================================================================
+            String prefijoImagen;
+            int numItem = i + 1; // Ya que se usa 'i', es mejor definirlo aquí
+            String carpetaReal = subDirectorio; 
+
+            switch (subDirectorio) {
+                case "outerwear":
+                    prefijoImagen = "out"; 
+                    break;
+                case "nite_out":
+                    prefijoImagen = "nite"; 
+                    break;
+                case "new_in":
+                    prefijoImagen = "new"; 
+                    break;
+                case "jeans":
+                    prefijoImagen = "jean"; 
+                    break;
+                case "rebajas":
+                    prefijoImagen = "rebajas"; 
+                    break;
+                // Para Polos, Ropa, Accesorios, el prefijo coincide con el nombre de la carpeta
+                case "polos":
+                case "ropa":
+                case "accesorios":
+                default:
+                    prefijoImagen = subDirectorio; 
+                    break;
+            }
+
+         // Lógica simplificada después del switch
+            String extension = ".webp"; // <--- Siempre .webp
+            int numItem1 = i + 1;
+
+            // Genera la URL: [carpeta]/[prefijo][número][.webp]
+            p.setImagenUrl(subDirectorio + "/" + prefijoImagen + numItem1 + extension);
+
+            // -------------------------------------------------------------------------
+            // 3. CONSTRUCCIÓN FINAL DE LA URL
+            // -------------------------------------------------------------------------
+            // Genera la URL: [carpeta]/[prefijo][número][.extensión]
+            p.setImagenUrl(carpetaReal + "/" + prefijoImagen + numItem1 + extension); 
+            // =========================================================================
+            
+            productoRepository.save(p);
+        } // <-- FIN DEL CICLO FOR
+        System.out.println("✅ Productos de " + nombreCategoria + " insertados: " + productosData.length);
+    } // <-- FIN DE LA FUNCIÓN
+}
