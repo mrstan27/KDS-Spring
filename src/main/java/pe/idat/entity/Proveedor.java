@@ -1,7 +1,6 @@
 package pe.idat.entity;
 
 import jakarta.persistence.*;
-import java.util.List;
 
 @Entity
 @Table(name = "proveedores")
@@ -12,57 +11,45 @@ public class Proveedor {
     @Column(name = "proveedor_id")
     private Integer proveedorId;
 
-    @Column(name = "razon_social", length = 100, nullable = false)
+    @Column(name = "razon_social", nullable = false)
     private String razonSocial;
 
-    @Column(name = "ruc", length = 11, nullable = false, unique = true)
+    @Column(name = "ruc", nullable = false, unique = true)
     private String ruc;
 
-    @Column(name = "direccion", length = 255)
+    @Column(name = "direccion")
     private String direccion;
 
-    @Column(name = "telefono", length = 20)
+    @Column(name = "telefono")
     private String telefono;
 
-    @Column(name = "correo", length = 100)
+    @Column(name = "correo")
     private String correo;
+    
+    @Column(name = "rubro")
+    private String rubro; // <-- CAMPO AGREGADO
 
-    @Column(name = "rubro", length = 100)
-    private String rubro;
+    @Column(name = "estado")
+    private String estado; // ACTIVO, INACTIVO
 
-    @Column(name = "estado", length = 20)
-    private String estado = "Activo";  // valor inicial
+    public Proveedor() {
+    }
 
-    // Relación con compras
-    //@OneToMany(mappedBy = "proveedor")
-    //private List<CompraCabecera> compras;
-
-    public Proveedor() {}
-
+    // Getters y Setters
     public Integer getProveedorId() { return proveedorId; }
     public void setProveedorId(Integer proveedorId) { this.proveedorId = proveedorId; }
-
     public String getRazonSocial() { return razonSocial; }
     public void setRazonSocial(String razonSocial) { this.razonSocial = razonSocial; }
-
     public String getRuc() { return ruc; }
     public void setRuc(String ruc) { this.ruc = ruc; }
-
     public String getDireccion() { return direccion; }
     public void setDireccion(String direccion) { this.direccion = direccion; }
-
     public String getTelefono() { return telefono; }
     public void setTelefono(String telefono) { this.telefono = telefono; }
-
     public String getCorreo() { return correo; }
     public void setCorreo(String correo) { this.correo = correo; }
-
     public String getRubro() { return rubro; }
     public void setRubro(String rubro) { this.rubro = rubro; }
-
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
-
-    //public List<CompraCabecera> getCompras() { return compras; }
-    //public void setCompras(List<CompraCabecera> compras) { this.compras = compras; }
 }

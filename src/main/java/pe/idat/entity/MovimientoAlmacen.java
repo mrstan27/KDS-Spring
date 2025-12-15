@@ -21,7 +21,7 @@ public class MovimientoAlmacen {
     @Column(name = "motivo")
     private String motivo;
 
-    // CAMBIO CRÍTICO: nullable = true para permitir movimientos automáticos del sistema (Web)
+    // CAMBIO CRÍTICO: nullable = true permite guardar movimientos sin usuario (Web)
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = true) 
     private Usuario usuario;
@@ -29,6 +29,9 @@ public class MovimientoAlmacen {
     @ManyToOne
     @JoinColumn(name = "compra_id", nullable = true)
     private Compra compraReferencia;
+
+    public MovimientoAlmacen() {
+    }
 
     // Getters y Setters
     public Integer getMovimientoId() { return movimientoId; }
