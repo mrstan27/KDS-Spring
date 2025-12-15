@@ -122,6 +122,54 @@ body {
 	color: #fff;
 }
 
+/* --- ESTILOS NUEVOS PARA CANTIDAD --- */
+.quantity-control {
+    display: flex; 
+    align-items: center; 
+    border: 1px solid #000; 
+    height: 38px; /* Altura para igualar botones */
+}
+.btn-qty { 
+    background: transparent; 
+    border: none; 
+    padding: 0 10px; 
+    font-size: 1.2rem; 
+    cursor: pointer; 
+    color: #555;
+    height: 100%;
+}
+.btn-qty:hover { color: var(--kids-red); }
+.input-qty { 
+    width: 35px; 
+    text-align: center; 
+    border: none; 
+    font-weight: bold; 
+    background: transparent;
+    -moz-appearance: textfield; 
+}
+.input-qty::-webkit-outer-spin-button, 
+.input-qty::-webkit-inner-spin-button { 
+    -webkit-appearance: none; margin: 0; 
+}
+
+/* Botón Añadir actualizado */
+.btn-add-custom {
+    background-color: #000; 
+    color: #fff; 
+    border: 1px solid #000; 
+    font-size: 0.8rem;
+    font-weight: bold;
+    flex-grow: 1;
+    border-radius: 0;
+    transition: all 0.3s;
+}
+.btn-add-custom:hover {
+    background-color: var(--kids-red); 
+    border-color: var(--kids-red);
+}
+
+/* ------------------------------------ */
+
 footer {
 	background-color: #f2f2f2;
 	padding-top: 50px;
@@ -232,13 +280,14 @@ footer {
 								class="bi bi-person"></i></a>
 						</c:otherwise>
 					</c:choose>
+					
 					<a href="${pageContext.request.contextPath}/carrito"
-						class="btn-icon-action position-relative"> <i
-						class="bi bi-bag"></i> <c:if
-							test="${not empty sessionScope.carrito and sessionScope.carrito.size() > 0}">
-							<span
-								class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
-								style="font-size: 0.5rem;"> <span class="visually-hidden">Items</span>
+						class="btn-icon-action position-relative"> 
+						<i class="bi bi-bag"></i> 
+						<c:if test="${not empty sessionScope.carrito and sessionScope.carrito.size() > 0}">
+							<span class="position-absolute top-0 start-100 translate-middle badge rounded-circle bg-danger border border-light"
+								style="font-size: 0.6rem; padding: 0.35em 0.5em;"> 
+								${sessionScope.carrito.size()}
 							</span>
 						</c:if>
 					</a>
@@ -265,6 +314,21 @@ footer {
 		<div class="text-center mb-5">
 			<h2 class="fw-bold text-uppercase">Lo Nuevo (New In)</h2>
 			<p class="text-muted">Directo del almacén a tu armario</p>
+		</div>
+		
+		<div class="row justify-content-center">
+			<div class="col-md-8">
+		        <c:if test="${not empty success}">
+		            <div class="alert alert-success alert-dismissible fade show" role="alert">
+		                ${success} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+		            </div>
+		        </c:if>
+		        <c:if test="${not empty error}">
+		            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+		                ${error} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+		            </div>
+		        </c:if>
+			</div>
 		</div>
 
 		<div class="row g-4">
@@ -297,15 +361,21 @@ footer {
 
 							<c:choose>
 								<c:when test="${p.stockActual > 0}">
-									<a
-										href="${pageContext.request.contextPath}/carrito/agregar/${p.productoId}"
-										class="btn btn-outline-dark rounded-0 w-100 btn-sm fw-bold">AÑADIR
-										AL CARRITO</a>
+									<form action="${pageContext.request.contextPath}/carrito/agregar/${p.productoId}" method="get">
+										<div class="d-flex align-items-center mt-2 px-2">
+											<div class="quantity-control me-2">
+												<button type="button" class="btn-qty" onclick="updateQty(this, -1)">-</button>
+												<input type="number" name="cantidad" value="1" min="1" max="${p.stockActual}" class="input-qty" readonly>
+												<button type="button" class="btn-qty" onclick="updateQty(this, 1)">+</button>
+											</div>
+											<button type="submit" class="btn btn-add-custom py-2">AÑADIR</button>
+										</div>
+									</form>
 								</c:when>
 								<c:otherwise>
-									<button
-										class="btn btn-secondary rounded-0 w-100 btn-sm fw-bold"
-										disabled>SIN STOCK</button>
+									<div class="px-2">
+										<button class="btn btn-secondary rounded-0 w-100 btn-sm fw-bold" disabled>SIN STOCK</button>
+									</div>
 								</c:otherwise>
 							</c:choose>
 						</div>
@@ -368,6 +438,23 @@ footer {
 	<script
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+	<script>
+        function updateQty(btn, change) {
+            // Busca el input que está al lado del botón presionado
+            const input = btn.parentElement.querySelector('input');
+            let value = parseInt(input.value);
+            const min = parseInt(input.min);
+            const max = parseInt(input.max);
+            
+            value += change;
+            
+            // Solo actualiza si está dentro del rango permitido (1 a Stock Actual)
+            if (value >= min && value <= max) {
+                input.value = value;
+            }
+        }
+    </script>
 
 	<c:if test="${not empty mensajeBienvenida}">
 		<script>

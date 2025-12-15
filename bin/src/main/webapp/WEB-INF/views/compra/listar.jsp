@@ -13,7 +13,7 @@
 </head>
 <body>
 
-    <div class="registro-card wide" style="width: 90%; max-width: 1200px; margin: 30px auto;">
+    <div class="registro-card wide" style="width: 90%; max-width: 1300px; margin: 30px auto;">
         
         <div style="margin-bottom: 15px;">
             <a href="${pageContext.request.contextPath}/login/menu" style="color: #c0392b; text-decoration: none; font-weight: bold;">
@@ -22,7 +22,16 @@
         </div>
 
         <div class="registro-header">
-            <h2>Gestión de Compras y Abastecimiento</h2>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2>Seguimiento de Órdenes de Compra</h2>
+                    <p class="text-muted">Gestión de flujo: Cotización -> Aprobación -> Recepción</p>
+                </div>
+                <div class="input-group" style="width: 300px;">
+                    <span class="input-group-text"><i class="fa-solid fa-search"></i></span>
+                    <input type="text" id="filtroTabla" class="form-control" placeholder="Buscar orden, proveedor...">
+                </div>
+            </div>
             <hr class="header-separator">
         </div>
 
@@ -33,12 +42,8 @@
             <div class="alert alert-danger"><i class="fa-solid fa-triangle-exclamation"></i> ${error}</div>
         </c:if>
         
-        <a href="${pageContext.request.contextPath}/compras/nueva" class="btn-nuevo">
-            <i class="fa-solid fa-cart-plus"></i> Nueva Orden de Compra
-        </a>
-
         <div class="tabla-container">
-            <table class="tabla-estilo table-hover">
+            <table class="tabla-estilo table-hover" id="tablaCompras">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -46,12 +51,15 @@
                         <th>Proveedor</th>
                         <th>Documento</th>
                         <th>Monto</th>
+                        <th>Estado Aprobación</th>
                         <th>Estado Logístico</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     <c:forEach items="${listaCompras}" var="c">
+                        <%-- Ocultamos las Cotizaciones puras, solo mostramos Ordenes y Facturas --%>
+                        <c:if test="${c.tipoDocumento != 'COTIZACION'}">
                         <tr>
                             <td><b>#${c.compraId}</b></td>
                             <td>${c.fechaCompra.toLocalDate()}</td>
@@ -70,11 +78,33 @@
                             <td style="font-weight: bold;">S/ ${c.montoTotal}</td>
                             
                             <td>
-                                <c:if test="${c.estadoLogistico == 'PENDIENTE'}">
-                                    <span class="badge bg-warning text-dark">Pendiente</span>
+                                <c:choose>
+                                    <c:when test="${c.estado == 'PENDIENTE'}">
+                                        <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock"></i> Por Aprobar</span>
+                                    </c:when>
+                                    <c:when test="${c.estado == 'APROBADA'}">
+                                        <span class="badge bg-success"><i class="fa-solid fa-check"></i> Aprobada</span>
+                                    </c:when>
+                                    <c:when test="${c.estado == 'RECHAZADA'}">
+                                        <span class="badge bg-danger"><i class="fa-solid fa-xmark"></i> Rechazada</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="badge bg-light text-dark">${c.estado}</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
+                            
+                            <td>
+                                <c:if test="${c.estado == 'APROBADA'}">
+                                    <c:if test="${c.estadoLogistico == 'PENDIENTE'}">
+                                        <span class="badge bg-info text-dark">Esperando Mercadería</span>
+                                    </c:if>
+                                    <c:if test="${c.estadoLogistico == 'RECIBIDO'}">
+                                        <span class="badge bg-success">En Almacén</span>
+                                    </c:if>
                                 </c:if>
-                                <c:if test="${c.estadoLogistico == 'RECIBIDO'}">
-                                    <span class="badge bg-success">En Almacén</span>
+                                <c:if test="${c.estado != 'APROBADA'}">
+                                    <span class="text-muted" style="font-size:0.8em;">Bloqueado</span>
                                 </c:if>
                             </td>
 
@@ -85,23 +115,43 @@
                                         <i class="fa-solid fa-file-pdf"></i>
                                     </a>
 
-                                    <c:if test="${c.tipoDocumento == 'ORDEN_COMPRA'}">
-                                        <button type="button" class="btn btn-sm btn-outline-primary" 
-                                                onclick="abrirModalFactura(${c.compraId})" title="Registrar Factura">
-                                            <i class="fa-solid fa-file-invoice-dollar"></i>
-                                        </button>
+                                    <c:if test="${usuario.rol.nombreRol == 'Administrador' && c.estado == 'PENDIENTE'}">
+                                        <a href="${pageContext.request.contextPath}/compras/aprobar/${c.compraId}" 
+                                           class="btn btn-sm btn-success" title="Aprobar Orden"
+                                           onclick="return confirm('¿Aprobar esta orden de compra?')">
+                                            <i class="fa-solid fa-thumbs-up"></i>
+                                        </a>
+                                        <a href="${pageContext.request.contextPath}/compras/rechazar/${c.compraId}" 
+                                           class="btn btn-sm btn-dark" title="Rechazar Orden"
+                                           onclick="return confirm('¿Rechazar esta orden? No se podrá recuperar.')">
+                                            <i class="fa-solid fa-thumbs-down"></i>
+                                        </a>
                                     </c:if>
 
-                                    <c:if test="${c.estadoLogistico == 'PENDIENTE'}">
-                                        <a href="${pageContext.request.contextPath}/compras/recepcionar/${c.compraId}" 
-                                           class="btn btn-sm btn-success" 
-                                           onclick="return confirm('¿Confirmas el ingreso al almacén?')" title="Recibir Mercadería">
-                                            <i class="fa-solid fa-box-open"></i>
-                                        </a>
+                                    <c:if test="${c.estado == 'APROBADA'}">
+                                        <c:if test="${usuario.rol.nombreRol == 'Administrador' || usuario.rol.nombreRol == 'Almacenero'}">
+                                            
+                                            <c:if test="${c.tipoDocumento == 'ORDEN_COMPRA'}">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                        onclick="abrirModalFactura(${c.compraId})" title="Registrar Factura">
+                                                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                                                </button>
+                                            </c:if>
+
+                                            <c:if test="${c.estadoLogistico == 'PENDIENTE'}">
+                                                <a href="${pageContext.request.contextPath}/compras/recepcionar/${c.compraId}" 
+                                                   class="btn btn-sm btn-success" 
+                                                   onclick="return confirm('¿Confirmas el ingreso al almacén? Se actualizará el stock.')" title="Recibir Mercadería">
+                                                    <i class="fa-solid fa-box-open"></i>
+                                                </a>
+                                            </c:if>
+                                            
+                                        </c:if>
                                     </c:if>
                                 </div>
                             </td>
                         </tr>
+                        </c:if>
                     </c:forEach>
                 </tbody>
             </table>
@@ -120,7 +170,8 @@
                 <input type="hidden" name="idCompra" id="modalIdCompra">
                 <div class="mb-3">
                     <label>Número de Factura Física:</label>
-                    <input type="text" name="numFactura" class="form-control" required placeholder="Ej: F001-004532">
+                    <input type="text" name="numFactura" class="form-control" 
+                           required placeholder="Ej: F001-004532">
                 </div>
               </div>
               <div class="modal-footer">
@@ -138,6 +189,21 @@
             var myModal = new bootstrap.Modal(document.getElementById('modalFactura'));
             myModal.show();
         }
+
+        // --- SCRIPT DE FILTRADO RÁPIDO ---
+        document.getElementById('filtroTabla').addEventListener('keyup', function() {
+            let texto = this.value.toLowerCase();
+            let filas = document.querySelectorAll('#tablaCompras tbody tr');
+
+            filas.forEach(fila => {
+                let contenido = fila.innerText.toLowerCase();
+                if (contenido.includes(texto)) {
+                    fila.style.display = '';
+                } else {
+                    fila.style.display = 'none';
+                }
+            });
+        });
     </script>
 </body>
 </html>

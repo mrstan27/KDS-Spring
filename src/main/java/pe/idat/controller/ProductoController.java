@@ -42,8 +42,7 @@ public class ProductoController {
                           @RequestParam("file") MultipartFile imagen) {
         
         if (!imagen.isEmpty()) {
-            // Nota: Esta ruta absoluta funciona en desarrollo.
-            // Asegúrate de que la carpeta exista en tu disco.
+            // Recuerda: ruta absoluta funciona en local, en prod se usa otra estrategia
             Path directorioImagenes = Paths.get("src//main//webapp//images//productos");
             String rutaAbsoluta = directorioImagenes.toFile().getAbsolutePath();
 
@@ -80,20 +79,14 @@ public class ProductoController {
 
     // --- SECCIÓN 2: MÉTODOS PARA LA TIENDA PÚBLICA (CATÁLOGO) ---
 
-    // Este método maneja las URLs como: /productos/categoria/jeans
     @GetMapping("/categoria/{nombreCategoria}")
     public String verCatalogoPorCategoria(@PathVariable("nombreCategoria") String categoria, Model model) {
         
-        // 1. Limpiamos el texto (ej: "new-in" -> "NEW IN")
         String nombreBusqueda = categoria.replace("-", " ").toUpperCase();
         
-        // 2. Usamos el servicio nuevo para buscar
-        // Usamos "listaProductos" para mantener coherencia con tu método 'listar'
         model.addAttribute("listaProductos", productoService.listarPorNombreCategoria(nombreBusqueda));
         model.addAttribute("tituloCategoria", nombreBusqueda);
         
-        // 3. Retornamos la vista del catálogo (NO la de listar admin)
-        // Asegúrate de tener el archivo catalogo.jsp en la carpeta views/producto/
         return "producto/catalogo"; 
     }
 }

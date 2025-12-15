@@ -7,6 +7,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import pe.idat.dto.ItemCarrito;
 import pe.idat.entity.Producto;
@@ -37,15 +38,25 @@ public class CarritoController {
         return "producto/carrito";
     }
 
-    // 2. AGREGAR AL CARRITO (Valida Stock)
+    // 2. AGREGAR AL CARRITO (Con Cantidad Personalizada y "Stay on Page")
     @GetMapping("/agregar/{id}")
-    public String agregarItem(@PathVariable Integer id, HttpSession session, RedirectAttributes flash) {
+    public String agregarItem(@PathVariable Integer id, 
+                              @RequestParam(required = false, defaultValue = "1") Integer cantidad, // NUEVO: Recibe cantidad
+                              HttpSession session, 
+                              RedirectAttributes flash,
+                              HttpServletRequest request) {
+        
         Producto p = productoService.obtenerProductoPorId(id);
         
+        // Preparamos la URL de retorno
+        String referer = request.getHeader("Referer");
+        String urlRetorno = (referer != null && !referer.isEmpty()) ? referer : "/productos/catalogo";
+
         if (p != null) {
+            // Validación inicial de stock
             if (p.getStockActual() <= 0) {
                 flash.addFlashAttribute("error", "Producto agotado.");
-                return "redirect:/index"; // O a donde estaba
+                return "redirect:" + urlRetorno;
             }
 
             List<ItemCarrito> carrito = obtenerCarrito(session);
@@ -53,11 +64,12 @@ public class CarritoController {
             
             for (ItemCarrito item : carrito) {
                 if (item.getProductoId().equals(id)) {
-                    if (item.getCantidad() + 1 <= p.getStockActual()) {
-                        item.setCantidad(item.getCantidad() + 1);
-                        flash.addFlashAttribute("success", "Cantidad actualizada.");
+                    // Validamos si la suma de lo que ya tengo + lo nuevo supera el stock
+                    if (item.getCantidad() + cantidad <= p.getStockActual()) {
+                        item.setCantidad(item.getCantidad() + cantidad);
+                        flash.addFlashAttribute("success", "Se agregaron " + cantidad + " unidades.");
                     } else {
-                        flash.addFlashAttribute("error", "Stock máximo alcanzado.");
+                        flash.addFlashAttribute("error", "Stock insuficiente para esa cantidad.");
                     }
                     existe = true;
                     break;
@@ -65,11 +77,17 @@ public class CarritoController {
             }
 
             if (!existe) {
-                carrito.add(new ItemCarrito(p.getProductoId(), p.getNombre(), p.getImagenUrl(), p.getPrecioVenta().doubleValue(), 1));
-                flash.addFlashAttribute("success", "Producto añadido.");
+                // Validamos que la cantidad inicial no supere el stock
+                if (cantidad <= p.getStockActual()) {
+                    carrito.add(new ItemCarrito(p.getProductoId(), p.getNombre(), p.getImagenUrl(), p.getPrecioVenta().doubleValue(), cantidad));
+                    flash.addFlashAttribute("success", "Producto añadido.");
+                } else {
+                    flash.addFlashAttribute("error", "No hay suficiente stock disponible.");
+                }
             }
         }
-        return "redirect:/carrito";
+        
+        return "redirect:" + urlRetorno;
     }
 
     // 3. ELIMINAR DEL CARRITO
@@ -80,10 +98,9 @@ public class CarritoController {
         return "redirect:/carrito";
     }
 
-    // 4. CHECKOUT (Requiere Login)
+    // 4. CHECKOUT
     @GetMapping("/checkout")
     public String checkout(HttpSession session, Model model, Authentication auth) {
-        // Verificar si hay usuario logueado
         if (auth == null) {
             return "redirect:/login/logincliente";
         }
@@ -105,10 +122,8 @@ public class CarritoController {
             List<ItemCarrito> carrito = obtenerCarrito(session);
             if (carrito.isEmpty()) return "redirect:/carrito";
 
-            // Registrar venta web real
             ventaService.registrarVentaWeb(carrito, auth.getName());
 
-            // Limpiar carrito
             session.removeAttribute("carrito");
             
             flash.addFlashAttribute("mensajeBienvenida", "¡Pago exitoso! Tu pedido está en proceso.");
