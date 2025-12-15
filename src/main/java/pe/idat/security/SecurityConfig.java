@@ -15,83 +15,73 @@ import jakarta.servlet.DispatcherType;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public DetalleUsuarioService detalleUsuarioService() {
-        return new DetalleUsuarioService();
-    }
+	@Bean
+	public DetalleUsuarioService detalleUsuarioService() {
+		return new DetalleUsuarioService();
+	}
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
 
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(detalleUsuarioService());
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
+	@Bean
+	public AuthenticationProvider authenticationProvider() {
+		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+		authProvider.setUserDetailsService(detalleUsuarioService());
+		authProvider.setPasswordEncoder(passwordEncoder());
+		return authProvider;
+	}
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
-                
-                // RUTAS PÚBLICAS
-                .requestMatchers("/", "/index").permitAll()
-                .requestMatchers("/login/**", "/auth/**").permitAll()
-                .requestMatchers("/cliente/nuevo", "/cliente/guardar").permitAll() 
-                .requestMatchers("/productos/categoria/**", "/productos/detalle/**").permitAll()
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		http.csrf(csrf -> csrf.disable())
+				.authorizeHttpRequests(auth -> auth.dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR)
+						.permitAll().requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
 
-                // --- REGLAS ESTRICTAS DE NEGOCIO ---
-                
-                // 1. GESTIÓN DE PRODUCTOS (Crear/Editar): Solo Admin y Almacenero. 
-                // EL VENDEDOR YA NO PUEDE ENTRAR AQUÍ.
-                .requestMatchers("/productos/nuevo", "/productos/guardar", "/productos/editar/**", "/productos/eliminar/**")
-                    .hasAnyAuthority("Administrador", "Almacenero")
+						// RUTAS PÚBLICAS
+						.requestMatchers("/", "/index").permitAll().requestMatchers("/login/**", "/auth/**").permitAll()
+						.requestMatchers("/cliente/nuevo", "/cliente/guardar").permitAll()
+						.requestMatchers("/productos/categoria/**", "/productos/detalle/**").permitAll()
 
-                // 2. RECEPCIÓN DE MERCADERÍA Y FACTURAS: Exclusivo de Almacén (y Admin)
-                // El usuario de 'Compras' ya no puede hacer esto.
-                .requestMatchers("/compras/recepcionar/**", "/compras/facturar")
-                    .hasAnyAuthority("Administrador", "Almacenero")
+						// --- REGLAS ESTRICTAS DE NEGOCIO ---
 
-                // 3. MOVIMIENTOS DE ALMACÉN: Exclusivo de Almacén (y Admin)
-                .requestMatchers("/movimientos/**")
-                    .hasAnyAuthority("Administrador", "Almacenero")
+						// 1. GESTIÓN DE PRODUCTOS (Crear/Editar): Solo Admin y Almacenero.
+						// EL VENDEDOR YA NO PUEDE ENTRAR AQUÍ.
+						.requestMatchers("/productos/nuevo", "/productos/guardar", "/productos/editar/**",
+								"/productos/eliminar/**")
+						.hasAnyAuthority("Administrador", "Almacenero")
 
-                // 4. USUARIOS Y ROLES: Solo Admin
-                .requestMatchers("/usuarios/**", "/roles/**").hasAuthority("Administrador")
+						// 2. RECEPCIÓN DE MERCADERÍA Y FACTURAS: Exclusivo de Almacén (y Admin)
+						// El usuario de 'Compras' ya no puede hacer esto.
+						.requestMatchers("/compras/recepcionar/**", "/compras/facturar")
+						.hasAnyAuthority("Administrador", "Almacenero")
 
-                // Todo lo demás requiere autenticación genérica
-                .anyRequest().authenticated()
-            )
-            .formLogin(login -> login
-                .loginPage("/login/logincliente") 
-                .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/login/login-success", true)
-                .failureHandler((request, response, exception) -> {
-                    String tipoAcceso = request.getParameter("tipoAcceso");
-                    String contextPath = request.getContextPath(); 
-                    if (tipoAcceso != null && tipoAcceso.equals("admin")) {
-                        response.sendRedirect(contextPath + "/login/loginusuario?error");
-                    } else {
-                        response.sendRedirect(contextPath + "/login/logincliente?error");
-                    }
-                })
-                .usernameParameter("email")
-                .passwordParameter("password")
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/login/logincliente?logout")
-                .permitAll()
-            );
+						// 3. MOVIMIENTOS DE ALMACÉN: Exclusivo de Almacén (y Admin)
+						.requestMatchers("/movimientos/**").hasAnyAuthority("Administrador", "Almacenero")
 
-        return http.build();
-    }
+						// 4. USUARIOS Y ROLES: Solo Admin
+						.requestMatchers("/usuarios/**", "/roles/**").hasAuthority("Administrador")
+
+						// PERMISO DE VENTAS INTERNAS (POS)
+						.requestMatchers("/ventas/**").hasAnyAuthority("Administrador", "Vendedor")
+
+						// Todo lo demás requiere autenticación genérica
+						.anyRequest().authenticated())
+				.formLogin(login -> login.loginPage("/login/logincliente").loginProcessingUrl("/login")
+						.defaultSuccessUrl("/login/login-success", true)
+						.failureHandler((request, response, exception) -> {
+							String tipoAcceso = request.getParameter("tipoAcceso");
+							String contextPath = request.getContextPath();
+							if (tipoAcceso != null && tipoAcceso.equals("admin")) {
+								response.sendRedirect(contextPath + "/login/loginusuario?error");
+							} else {
+								response.sendRedirect(contextPath + "/login/logincliente?error");
+							}
+						}).usernameParameter("email").passwordParameter("password").permitAll())
+				.logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login/logincliente?logout")
+						.permitAll());
+
+		return http.build();
+	}
 }
