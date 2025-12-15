@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 
 <!DOCTYPE html>
 <html>
@@ -22,24 +23,32 @@
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3 border-bottom">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="m-0 fw-bold">Pedido #${venta.ventaId}</h5>
+                    <h5 class="m-0 fw-bold">Detalle Pedido #${venta.ventaId}</h5>
                     <span class="badge bg-success">${venta.estado}</span>
                 </div>
             </div>
             <div class="card-body p-4">
                 
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <small class="text-muted d-block">Fecha de Compra</small>
-                        <strong>${venta.fechaVenta.toLocalDate()} ${venta.fechaVenta.toLocalTime().toString().substring(0,5)}</strong>
+                <div class="row mb-4 small">
+                    <div class="col-md-6 mb-2">
+                        <small class="text-muted d-block">Fecha y Hora</small>
+                        <strong><fmt:formatDate value="${venta.fechaVenta}" pattern="dd/MM/yyyy HH:mm"/></strong>
                     </div>
-                    <div class="col-md-6 text-md-end">
-                        <small class="text-muted d-block">Total Pagado</small>
-                        <strong class="fs-4 text-danger">S/ ${venta.montoTotal}</strong>
+                    <div class="col-md-6 mb-2">
+                        <small class="text-muted d-block">Cliente</small>
+                        <strong>${venta.cliente.nombre} ${venta.cliente.apellido} (${venta.cliente.correo})</strong>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                         <small class="text-muted d-block">Total Pagado</small>
+                        <strong class="fs-5 text-danger">S/ ${venta.montoTotal}</strong>
+                    </div>
+                     <div class="col-md-6 mb-2">
+                        <small class="text-muted d-block">Canal de Venta</small>
+                        <strong>${venta.tipoVenta}</strong>
                     </div>
                 </div>
 
-                <h6 class="text-muted text-uppercase small fw-bold mb-3">Productos Comprados</h6>
+                <h6 class="text-muted text-uppercase small fw-bold mb-3 border-top pt-3">Productos</h6>
                 <div class="table-responsive">
                     <table class="table table-borderless align-middle">
                         <thead class="table-light">
@@ -58,7 +67,7 @@
                                             <img src="${pageContext.request.contextPath}/images/productos/${d.producto.imagenUrl}" 
                                                  class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;"
                                                  onerror="this.src='https://via.placeholder.com/40'">
-                                            <span>${d.producto.nombre}</span>
+                                            <span style="font-size: 0.9em;">${d.producto.nombre}</span>
                                         </div>
                                     </td>
                                     <td class="text-center">${d.cantidad}</td>
@@ -69,7 +78,7 @@
                         </tbody>
                         <tfoot class="border-top">
                             <tr>
-                                <td colspan="3" class="text-end fw-bold">TOTAL</td>
+                                <td colspan="3" class="text-end fw-bold">TOTAL PAGADO</td>
                                 <td class="text-end fw-bold text-danger">S/ ${venta.montoTotal}</td>
                             </tr>
                         </tfoot>
@@ -78,12 +87,11 @@
 
             </div>
             <div class="card-footer bg-white text-center py-3">
-                <button class="btn btn-dark" onclick="window.print()">
+                <button class="btn btn-dark rounded-0" onclick="alert('Funcionalidad de impresión simulada.')">
                     <i class="fa-solid fa-print"></i> Imprimir Comprobante
                 </button>
             </div>
         </div>
     </div>
-
 </body>
 </html>

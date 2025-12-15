@@ -25,19 +25,25 @@ public class MiCuentaController {
 
     @GetMapping("/pedidos")
     public String misPedidos(Authentication auth, Model model) {
-        if (auth == null) return "redirect:/login/logincliente";
+        if (auth == null || !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("CLIENTE"))) {
+             // Si no está autenticado o no es cliente, lo manda al login
+            return "redirect:/login/logincliente";
+        }
 
-        // 1. Identificar al cliente logueado
+        // 1. Identificar al cliente logueado por su correo (el username en Spring Security)
         String email = auth.getName();
         Cliente cliente = clienteRepository.findByCorreo(email);
         
-        if (cliente == null) return "redirect:/logout"; // Seguridad paranoica
+        if (cliente == null) {
+            // Esto solo debería pasar si la base de datos está corrupta
+            return "redirect:/logout"; 
+        }
 
-        // 2. Traer sus ventas
+        // 2. Traer sus ventas ordenadas por fecha (más recientes primero)
         model.addAttribute("misVentas", ventaRepository.findByCliente_ClienteIdOrderByFechaVentaDesc(cliente.getClienteId()));
         model.addAttribute("cliente", cliente);
         
-        return "cliente/mis-pedidos";
+        return "cliente/mis-pedidos"; // Vista para el listado
     }
     
     @GetMapping("/pedidos/detalle/{id}")
@@ -45,16 +51,15 @@ public class MiCuentaController {
         if (auth == null) return "redirect:/login/logincliente";
         
         String email = auth.getName();
-        // Buscar la venta
+        
         Venta venta = ventaRepository.findById(id).orElse(null);
         
         // Seguridad: Verificar que la venta exista Y pertenezca al cliente logueado
-        // (Evita que un cliente vea los pedidos de otro cambiando el ID en la URL)
         if (venta != null && venta.getCliente().getCorreo().equals(email)) {
             model.addAttribute("venta", venta);
-            return "cliente/detalle-pedido";
+            return "cliente/detalle-pedido"; // Vista para el detalle
         }
         
-        return "redirect:/mi-cuenta/pedidos?error=no_autorizado";
+        return "redirect:/mi-cuenta/pedidos?error=No tiene permisos o el pedido no existe";
     }
 }

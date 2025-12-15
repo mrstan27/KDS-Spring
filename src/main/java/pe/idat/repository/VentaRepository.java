@@ -7,6 +7,7 @@ import java.util.List;
 
 @Repository
 public interface VentaRepository extends JpaRepository<Venta, Integer> {
-    // Buscar ventas por cliente, ordenadas por fecha (la más reciente primero)
+    
+    // Método para buscar ventas por el ID del cliente y ordenarlas por fecha descendente
     List<Venta> findByCliente_ClienteIdOrderByFechaVentaDesc(Integer clienteId);
 }
