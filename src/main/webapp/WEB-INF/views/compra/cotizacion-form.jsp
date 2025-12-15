@@ -17,34 +17,35 @@
         
         <div class="registro-header">
             <h2><i class="fa-solid fa-file-contract"></i> Generar Cotización</h2>
+            <p class="text-muted">Seleccione un proveedor para ver sus productos disponibles.</p>
             <hr class="header-separator">
         </div>
 
         <div class="row mb-4">
             <div class="col-md-8">
-                <label class="form-label fw-bold">1. Seleccione Proveedor:</label>
-                <select id="proveedorSelect" class="form-select" onchange="cargarProductosDelProveedor()">
+                <label class="form-label fw-bold fs-5">1. Seleccione Proveedor:</label>
+                <select id="proveedorSelect" class="form-select form-select-lg" onchange="cargarProductosDelProveedor()">
                     <option value="" disabled selected>-- Elija un Proveedor --</option>
                     <c:forEach items="${listaProveedores}" var="p">
-                        <option value="${p.proveedorId}">${p.razonSocial} - RUC: ${p.ruc}</option>
+                        <option value="${p.proveedorId}">${p.razonSocial} - Rubro: ${p.rubro}</option>
                     </c:forEach>
                 </select>
             </div>
         </div>
 
-        <div class="card bg-light mb-4" id="bloqueProductos" style="display:none;">
-            <div class="card-header fw-bold">2. Agregar Productos al Pedido</div>
+        <div class="card bg-light mb-4 shadow-sm" id="bloqueProductos" style="display:none;">
+            <div class="card-header fw-bold bg-secondary text-white">2. Agregar Productos al Pedido</div>
             <div class="card-body">
                 <div class="row align-items-end">
                     <div class="col-md-6">
-                        <label>Producto:</label>
+                        <label>Producto (Filtrado por proveedor):</label>
                         <select id="productoSelect" class="form-select">
                             <option value="">-- Seleccione proveedor primero --</option>
                         </select>
                     </div>
                     <div class="col-md-2">
                         <label>Costo Unit.:</label>
-                        <input type="number" id="precioInput" class="form-control" placeholder="0.00">
+                        <input type="number" id="precioInput" class="form-control" placeholder="0.00" step="0.01">
                     </div>
                     <div class="col-md-2">
                         <label>Cantidad:</label>
@@ -52,14 +53,14 @@
                     </div>
                     <div class="col-md-2">
                         <button type="button" class="btn btn-success w-100" onclick="agregarItem()">
-                            <i class="fa-solid fa-plus"></i>
+                            <i class="fa-solid fa-plus"></i> Añadir
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <table class="table table-bordered">
+        <table class="table table-bordered table-hover">
             <thead class="table-dark">
                 <tr>
                     <th>Producto</th>
@@ -69,19 +70,19 @@
                     <th></th>
                 </tr>
             </thead>
-            <tbody id="tablaDetalle"></tbody>
+            <tbody id="tablaDetalle" class="bg-white"></tbody>
             <tfoot>
                 <tr>
                     <td colspan="3" class="text-end fw-bold">TOTAL ESTIMADO:</td>
-                    <td class="fw-bold">S/ <span id="totalCotizacion">0.00</span></td>
+                    <td class="fw-bold fs-5">S/ <span id="totalCotizacion">0.00</span></td>
                     <td></td>
                 </tr>
             </tfoot>
         </table>
 
-        <div class="text-end mt-4">
+        <div class="d-flex justify-content-between mt-4">
             <a href="${pageContext.request.contextPath}/compras/cotizaciones" class="btn btn-secondary">Cancelar</a>
-            <button type="button" class="btn btn-primary" onclick="guardarCotizacion()">
+            <button type="button" class="btn btn-primary btn-lg" onclick="guardarCotizacion()">
                 <i class="fa-solid fa-save"></i> Guardar Cotización
             </button>
         </div>
@@ -90,34 +91,32 @@
     <script>
         let items = [];
 
-        // --- LÓGICA AJAX CRÍTICA ---
         function cargarProductosDelProveedor() {
             let proveedorId = document.getElementById("proveedorSelect").value;
             let comboProductos = document.getElementById("productoSelect");
             let bloque = document.getElementById("bloqueProductos");
             
-            // Limpiar combo
             comboProductos.innerHTML = '<option value="">Cargando productos...</option>';
-            items = []; // Limpiar tabla si cambia proveedor
+            items = []; 
             renderTabla();
 
-            // Llamada al endpoint API que creamos en ProductoController
+            // AJAX call
             fetch('${pageContext.request.contextPath}/productos/api/listarPorProveedor/' + proveedorId)
                 .then(response => response.json())
                 .then(data => {
                     comboProductos.innerHTML = '<option value="">-- Seleccione Producto --</option>';
+                    
                     if(data.length === 0) {
                          comboProductos.innerHTML = '<option value="">Este proveedor no tiene productos registrados</option>';
                     }
+                    
                     data.forEach(prod => {
-                        // Creamos la opción
                         let option = document.createElement("option");
                         option.value = prod.productoId;
                         option.text = prod.nombre;
-                        // Usamos un data-attribute para sugerir precio (opcional)
-                        option.setAttribute('data-precio', prod.precioVenta); 
                         comboProductos.appendChild(option);
                     });
+                    
                     bloque.style.display = 'block';
                 })
                 .catch(err => {
@@ -126,7 +125,6 @@
                 });
         }
 
-        // --- LÓGICA DE TABLA (Igual que antes) ---
         function agregarItem() {
             let select = document.getElementById("productoSelect");
             if(select.selectedIndex <= 0) { alert("Seleccione un producto"); return; }
@@ -136,11 +134,16 @@
             let precio = parseFloat(document.getElementById("precioInput").value);
             let cantidad = parseInt(document.getElementById("cantidadInput").value);
 
-            if(isNaN(precio) || isNaN(cantidad)) { alert("Ingrese valores válidos"); return; }
+            if(isNaN(precio) || precio <= 0) { alert("Ingrese un costo válido"); return; }
+            if(isNaN(cantidad) || cantidad < 1) { alert("Ingrese una cantidad válida"); return; }
 
             items.push({ productoId: id, nombre: nombre, precio: precio, cantidad: cantidad });
             renderTabla();
+            
+            // Reset fields
             document.getElementById("precioInput").value = "";
+            document.getElementById("cantidadInput").value = "10";
+            select.value = "";
         }
 
         function renderTabla() {
@@ -152,10 +155,10 @@
                 total += sub;
                 tbody.innerHTML += `<tr>
                     <td>\${i.nombre}</td>
-                    <td>\${i.precio}</td>
+                    <td>S/ \${i.precio.toFixed(2)}</td>
                     <td>\${i.cantidad}</td>
-                    <td>\${sub.toFixed(2)}</td>
-                    <td><button class='btn btn-danger btn-sm' onclick='borrar(\${idx})'>X</button></td>
+                    <td>S/ \${sub.toFixed(2)}</td>
+                    <td><button class='btn btn-danger btn-sm' onclick='borrar(\${idx})'><i class="fa-solid fa-trash"></i></button></td>
                 </tr>`;
             });
             document.getElementById("totalCotizacion").innerText = total.toFixed(2);
@@ -167,7 +170,8 @@
         }
 
         function guardarCotizacion() {
-            if(items.length === 0) { alert("Agregue productos"); return; }
+            if(items.length === 0) { alert("Debe agregar al menos un producto a la cotización"); return; }
+            
             let data = {
                 proveedorId: document.getElementById("proveedorSelect").value,
                 total: parseFloat(document.getElementById("totalCotizacion").innerText),
@@ -181,11 +185,14 @@
                 data: JSON.stringify(data),
                 success: function(res) {
                     if(res === "ok") {
-                        alert("Cotización registrada");
+                        alert("✅ Cotización registrada correctamente");
                         window.location.href = "${pageContext.request.contextPath}/compras/cotizaciones";
                     } else {
-                        alert("Error");
+                        alert("Error: " + res);
                     }
+                },
+                error: function() {
+                    alert("Error de conexión con el servidor");
                 }
             });
         }

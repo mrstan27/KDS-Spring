@@ -5,14 +5,22 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import pe.idat.entity.Producto;
+import pe.idat.entity.Proveedor;
+import pe.idat.entity.Categoria;
+import pe.idat.service.CategoriaService;
 import pe.idat.service.ProductoService;
+import pe.idat.service.ProveedorService;
+import pe.idat.repository.ProductoRepository;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.UUID;
 
 @Controller
 @RequestMapping("/productos")
@@ -20,73 +28,104 @@ public class ProductoController {
 
     @Autowired
     private ProductoService productoService;
-
-    // --- SECCIÓN 1: MÉTODOS PARA EL ADMINISTRADOR (CRUD) ---
+    
+    @Autowired
+    private CategoriaService categoriaService;
+    
+    @Autowired
+    private ProveedorService proveedorService; 
+    
+    @Autowired
+    private ProductoRepository productoRepository; 
 
     @GetMapping
     public String listar(Model model) {
         model.addAttribute("listaProductos", productoService.listarProductos());
         return "producto/listar";
     }
-
+    
     @GetMapping("/nuevo")
     public String nuevo(Model model) {
         model.addAttribute("producto", new Producto());
-        model.addAttribute("listaCategorias", productoService.listarCategorias());
-        model.addAttribute("titulo", "Nuevo Producto");
-        return "producto/formulario";
-    }
-
-    @PostMapping("/guardar")
-    public String guardar(@ModelAttribute Producto producto, 
-                          @RequestParam("file") MultipartFile imagen) {
-        
-        if (!imagen.isEmpty()) {
-            // Recuerda: ruta absoluta funciona en local, en prod se usa otra estrategia
-            Path directorioImagenes = Paths.get("src//main//webapp//images//productos");
-            String rutaAbsoluta = directorioImagenes.toFile().getAbsolutePath();
-
-            try {
-                byte[] bytesImg = imagen.getBytes();
-                Path rutaCompleta = Paths.get(rutaAbsoluta + "//" + imagen.getOriginalFilename());
-                Files.write(rutaCompleta, bytesImg);
-                
-                producto.setImagenUrl(imagen.getOriginalFilename());
-                
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        productoService.guardarProducto(producto);
-        return "redirect:/productos";
-    }
-
-    @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Integer id, Model model) {
-        Producto p = productoService.obtenerProductoPorId(id);
-        model.addAttribute("producto", p);
-        model.addAttribute("listaCategorias", productoService.listarCategorias());
-        model.addAttribute("titulo", "Editar Producto");
+        model.addAttribute("listaCategorias", categoriaService.listarCategorias());
+        // IMPORTANTE: Enviamos la lista de proveedores a la vista
+        model.addAttribute("listaProveedores", proveedorService.listarTodos());
         return "producto/formulario";
     }
     
+    @GetMapping("/editar/{id}")
+    public String editar(@PathVariable Integer id, Model model) {
+        Producto p = productoService.obtenerProductoPorId(id);
+        if (p != null) {
+            model.addAttribute("producto", p);
+            model.addAttribute("listaCategorias", categoriaService.listarCategorias());
+            model.addAttribute("listaProveedores", proveedorService.listarTodos());
+            return "producto/formulario";
+        }
+        return "redirect:/productos";
+    }
+    
+    @PostMapping("/guardar")
+    public String guardar(@ModelAttribute Producto producto, 
+                          @RequestParam("file") MultipartFile imagen,
+                          @RequestParam("proveedorId") Integer proveedorId, // Recibe el ID del select
+                          @RequestParam("categoriaId") Integer categoriaId, // Recibe el ID del select
+                          RedirectAttributes flash) {
+        try {
+            // 1. Imagen
+            if (!imagen.isEmpty()) {
+                String nombreImagen = UUID.randomUUID().toString() + "_" + imagen.getOriginalFilename();
+                Path rutaImagen = Paths.get("src//main//webapp//images//productos//" + nombreImagen);
+                Files.createDirectories(rutaImagen.getParent()); // Asegura que la carpeta exista
+                Files.write(rutaImagen, imagen.getBytes());
+                producto.setImagenUrl(nombreImagen);
+            } else {
+                if (producto.getProductoId() == null) producto.setImagenUrl("default.jpg");
+                // Si es editar, el hidden field en el JSP debe mantener la URL, o JPA lo maneja si el objeto está atado
+            }
+
+            // 2. Vincular Proveedor (OBLIGATORIO)
+            Proveedor prov = new Proveedor();
+            prov.setProveedorId(proveedorId);
+            producto.setProveedor(prov);
+            
+            // 3. Vincular Categoría
+            Categoria cat = new Categoria();
+            cat.setCategoriaId(categoriaId);
+            producto.setCategoria(cat);
+
+            // 4. Stock Inicial (Siempre 0 al crear)
+            if(producto.getProductoId() == null) {
+                producto.setStockActual(0);
+            }
+
+            productoService.guardarProducto(producto);
+            flash.addFlashAttribute("success", "Producto guardado con éxito.");
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            flash.addFlashAttribute("error", "Error al guardar: " + e.getMessage());
+            return "redirect:/productos/nuevo";
+        }
+        
+        return "redirect:/productos";
+    }
+    
     @GetMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Integer id) {
-        productoService.eliminarProducto(id);
+    public String eliminar(@PathVariable Integer id, RedirectAttributes flash) {
+        try {
+            productoService.eliminarProducto(id);
+            flash.addFlashAttribute("success", "Producto eliminado.");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", "No se puede eliminar: el producto tiene ventas o compras asociadas.");
+        }
         return "redirect:/productos";
     }
 
-    // --- SECCIÓN 2: MÉTODOS PARA LA TIENDA PÚBLICA (CATÁLOGO) ---
-
-    @GetMapping("/categoria/{nombreCategoria}")
-    public String verCatalogoPorCategoria(@PathVariable("nombreCategoria") String categoria, Model model) {
-        
-        String nombreBusqueda = categoria.replace("-", " ").toUpperCase();
-        
-        model.addAttribute("listaProductos", productoService.listarPorNombreCategoria(nombreBusqueda));
-        model.addAttribute("tituloCategoria", nombreBusqueda);
-        
-        return "producto/catalogo"; 
+    // API para el AJAX de Cotizaciones
+    @GetMapping("/api/listarPorProveedor/{id}")
+    @ResponseBody
+    public List<Producto> listarPorProveedorAPI(@PathVariable Integer id) {
+        return productoRepository.findByProveedor_ProveedorId(id);
     }
 }
