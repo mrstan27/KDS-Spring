@@ -15,18 +15,14 @@
         :root { --kids-red: #E30613; --kids-black: #000000; }
         body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #ffffff; color: #000; }
         
-        /* NAVBAR */
         .navbar-kids { background-color: #ffffff; padding: 1rem 0; border-bottom: 1px solid #eee; }
         .navbar-brand img { height: 50px; object-fit: contain; }
         .nav-link { color: #555 !important; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; font-weight: 600; margin: 0 5px; transition: color 0.3s; }
         .nav-link:hover { color: var(--kids-red) !important; text-decoration: underline; }
-        
-        /* Elementos especiales */
         .text-fire { color: var(--kids-red) !important; font-weight: bold; }
         .btn-icon-action { color: #333; font-size: 1.2rem; margin-left: 15px; text-decoration: none; transition: color 0.3s; }
         .btn-icon-action:hover { color: var(--kids-red); }
 
-        /* HERO SECTION */
         .hero-section {
             background-image: url('${pageContext.request.contextPath}/images/fondo_tienda.jpg');
             background-size: cover; background-position: center; height: 85vh;
@@ -38,7 +34,6 @@
         .btn-hero { background-color: var(--kids-red); color: #fff; padding: 12px 40px; font-weight: 700; text-transform: uppercase; border: none; border-radius: 0; margin-top: 20px; }
         .btn-hero:hover { background-color: #c00510; color: #fff; }
 
-        /* FOOTER */
         footer { background-color: #f2f2f2; padding-top: 50px; padding-bottom: 20px; color: #333; font-size: 0.85rem; margin-top: auto; }
         .footer-title { font-family: 'Times New Roman', serif; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; font-size: 1rem; color: #000; }
         .footer-link { display: block; color: #666; text-decoration: none; margin-bottom: 10px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; transition: color 0.3s; }
@@ -74,9 +69,15 @@
                     <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/productos/categoria/accesorios">ACCESORIOS</a></li>
                 </ul>
                 <div class="d-flex align-items-center">
-                    <a href="#" class="btn-icon-action"><i class="bi bi-search"></i></a>
                     <a href="${pageContext.request.contextPath}/login/logincliente" class="btn-icon-action" title="Cliente"><i class="bi bi-person"></i></a>
-                    <a href="#" class="btn-icon-action"><i class="bi bi-bag"></i></a>
+                    <a href="${pageContext.request.contextPath}/carrito" class="btn-icon-action position-relative">
+                        <i class="bi bi-bag"></i>
+                        <c:if test="${not empty sessionScope.carrito and sessionScope.carrito.size() > 0}">
+                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="font-size: 0.5rem;">
+                                <span class="visually-hidden">Items</span>
+                            </span>
+                        </c:if>
+                    </a>
                 </div>
             </div>
         </div>
@@ -91,6 +92,54 @@
         </div>
     </section>
 
+    <div class="container my-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-uppercase">Lo Nuevo (New In)</h2>
+            <p class="text-muted">Directo del almacén a tu armario</p>
+        </div>
+
+        <div class="row g-4">
+            <c:forEach items="${productosDestacados}" var="p" end="7"> 
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card border-0 h-100">
+                        <div style="position: relative; padding-top: 125%; overflow: hidden; background: #f0f0f0;">
+                            <img src="${pageContext.request.contextPath}/images/productos/${p.imagenUrl}" 
+                                 class="position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover;"
+                                 alt="${p.nombre}"
+                                 onerror="this.src='https://via.placeholder.com/300x400?text=KIDS'">
+                            
+                            <c:if test="${p.stockActual <= 0}">
+                                <div class="position-absolute top-0 end-0 bg-dark text-white px-2 py-1 m-2 small fw-bold">AGOTADO</div>
+                            </c:if>
+                            <c:if test="${p.stockActual > 0 && p.stockActual < 5}">
+                                <div class="position-absolute top-0 end-0 bg-warning text-dark px-2 py-1 m-2 small fw-bold">¡ÚLTIMOS ${p.stockActual}!</div>
+                            </c:if>
+                        </div>
+
+                        <div class="card-body text-center px-0">
+                            <h6 class="card-title fw-bold text-uppercase" style="font-size: 0.9rem;">${p.nombre}</h6>
+                            <p class="card-text text-muted">S/ ${p.precioVenta}</p>
+                            
+                            <c:choose>
+                                <c:when test="${p.stockActual > 0}">
+                                    <a href="${pageContext.request.contextPath}/carrito/agregar/${p.productoId}" 
+                                       class="btn btn-outline-dark rounded-0 w-100 btn-sm fw-bold">AÑADIR AL CARRITO</a>
+                                </c:when>
+                                <c:otherwise>
+                                    <button class="btn btn-secondary rounded-0 w-100 btn-sm fw-bold" disabled>SIN STOCK</button>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                    </div>
+                </div>
+            </c:forEach>
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="${pageContext.request.contextPath}/productos/categoria/new-in" class="btn btn-link text-dark fw-bold text-decoration-none border-bottom border-dark pb-1">VER TODO</a>
+        </div>
+    </div>
+
     <footer>
         <div class="container">
             <div class="row">
@@ -99,7 +148,6 @@
                     <a href="#" class="footer-link">TÉRMINOS Y CONDICIONES</a>
                     <a href="#" class="footer-link">CAMBIOS Y DEVOLUCIONES</a>
                     <a href="#" class="footer-link">PRIVACIDAD</a>
-                    <a href="#" class="footer-link">PROMOCIONES</a>
                     <div class="mt-3">
                         <img src="${pageContext.request.contextPath}/images/libro_reclamaciones.png" alt="Libro de Reclamaciones" class="libro-reclamaciones">
                     </div>
@@ -112,8 +160,6 @@
                 <div class="col-md-3 mb-4">
                     <h5 class="footer-title">GUÍA DE COMPRAS</h5>
                     <a href="#" class="footer-link">¿CÓMO COMPRAR?</a>
-                    <a href="#" class="footer-link">¿CÓMO PAGAR CON YAPE?</a>
-                    <a href="#" class="footer-link">RETIRO EN TIENDA</a>
                     <a href="#" class="footer-link">ENVÍOS</a>
                     <a href="#" class="footer-link">PREGUNTAS FRECUENTES</a>
                 </div>
@@ -122,8 +168,7 @@
                     <div class="social-icons mb-3">
                         <a href="#"><i class="bi bi-facebook"></i> FACEBOOK</a><br>
                         <a href="#"><i class="bi bi-instagram"></i> INSTAGRAM</a><br>
-                        <a href="#"><i class="bi bi-tiktok"></i> TIKTOK</a><br>
-                        <a href="#"><i class="bi bi-spotify"></i> SPOTIFY</a>
+                        <a href="#"><i class="bi bi-tiktok"></i> TIKTOK</a>
                     </div>
                     <h5 class="footer-title mt-4">SUSCRÍBETE AL NEWSLETTER</h5>
                     <a href="#" class="newsletter-box">¡REGÍSTRATE AHORA!</a>
@@ -131,54 +176,23 @@
             </div>
             <div class="text-center mt-5 pt-3 border-top border-secondary">
                 <p class="mb-0">2025 KIDS MADE HERE. Todos los derechos reservados.</p>
-                <p class="small text-muted mt-2">Cuando visita o interactúa con nuestra web, nosotros podemos usar cookies...</p>
             </div>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
+    
     <c:if test="${not empty mensajeBienvenida}">
         <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                
-                // 1. DISPARAR CONFETI 🎉
-                var count = 200;
-                var defaults = { origin: { y: 0.7 } };
-
-                function fire(particleRatio, opts) {
-                    confetti(Object.assign({}, defaults, opts, {
-                        particleCount: Math.floor(count * particleRatio)
-                    }));
-                }
-
-                fire(0.25, { spread: 26, startVelocity: 55, });
-                fire(0.2, { spread: 60, });
-                fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-                fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-                fire(0.1, { spread: 120, startVelocity: 45, });
-
-                // 2. MOSTRAR ALERTA ELEGANTE
-                Swal.fire({
-                    title: '¡Bienvenido!',
-                    text: '${mensajeBienvenida}', // Mensaje dinámico del Controller
-                    imageUrl: '${pageContext.request.contextPath}/images/logoKIDS.png',
-                    imageWidth: 200,
-                    imageAlt: 'Logo',
-                    confirmButtonText: 'IR A COMPRAR',
-                    confirmButtonColor: '#E30613', // Rojo Kids
-                    padding: '2rem',
-                    backdrop: `rgba(0,0,123,0.1)`, // Fondo azul tenue
-                    showClass: { popup: 'animate__animated animate__zoomIn' },
-                    hideClass: { popup: 'animate__animated animate__zoomOut' }
-                });
+            Swal.fire({
+                title: '¡Gracias!',
+                text: '${mensajeBienvenida}',
+                icon: 'success',
+                confirmButtonText: 'Seguir Comprando',
+                confirmButtonColor: '#E30613'
             });
         </script>
     </c:if>
-
 </body>
 </html>
-

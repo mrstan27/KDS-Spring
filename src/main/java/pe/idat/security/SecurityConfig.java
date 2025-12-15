@@ -47,32 +47,41 @@ public class SecurityConfig {
                 .requestMatchers("/cliente/nuevo", "/cliente/guardar").permitAll() 
                 .requestMatchers("/productos/categoria/**", "/productos/detalle/**").permitAll()
 
-                // Todo lo demás cerrado
+                // --- REGLAS ESTRICTAS DE NEGOCIO ---
+                
+                // 1. GESTIÓN DE PRODUCTOS (Crear/Editar): Solo Admin y Almacenero. 
+                // EL VENDEDOR YA NO PUEDE ENTRAR AQUÍ.
+                .requestMatchers("/productos/nuevo", "/productos/guardar", "/productos/editar/**", "/productos/eliminar/**")
+                    .hasAnyAuthority("Administrador", "Almacenero")
+
+                // 2. RECEPCIÓN DE MERCADERÍA Y FACTURAS: Exclusivo de Almacén (y Admin)
+                // El usuario de 'Compras' ya no puede hacer esto.
+                .requestMatchers("/compras/recepcionar/**", "/compras/facturar")
+                    .hasAnyAuthority("Administrador", "Almacenero")
+
+                // 3. MOVIMIENTOS DE ALMACÉN: Exclusivo de Almacén (y Admin)
+                .requestMatchers("/movimientos/**")
+                    .hasAnyAuthority("Administrador", "Almacenero")
+
+                // 4. USUARIOS Y ROLES: Solo Admin
+                .requestMatchers("/usuarios/**", "/roles/**").hasAuthority("Administrador")
+
+                // Todo lo demás requiere autenticación genérica
                 .anyRequest().authenticated()
             )
             .formLogin(login -> login
                 .loginPage("/login/logincliente") 
                 .loginProcessingUrl("/login")
-                
-                // Éxito:
                 .defaultSuccessUrl("/login/login-success", true)
-                
-                // 🔴 FALLO (AQUÍ ESTÁ EL ARREGLO PARA EL /idat)
                 .failureHandler((request, response, exception) -> {
                     String tipoAcceso = request.getParameter("tipoAcceso");
-                    
-                    // Esto obtendrá "/idat" gracias a tu application.properties
                     String contextPath = request.getContextPath(); 
-                    
                     if (tipoAcceso != null && tipoAcceso.equals("admin")) {
-                        // Redirige a: /idat/login/loginusuario?error
                         response.sendRedirect(contextPath + "/login/loginusuario?error");
                     } else {
-                        // Redirige a: /idat/login/logincliente?error
                         response.sendRedirect(contextPath + "/login/logincliente?error");
                     }
                 })
-                
                 .usernameParameter("email")
                 .passwordParameter("password")
                 .permitAll()

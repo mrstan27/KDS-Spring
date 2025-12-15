@@ -3,7 +3,7 @@ package pe.idat.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List; // Asegúrate de tener este import
+import java.util.List;
 
 import pe.idat.dto.CompraDTO;
 import pe.idat.dto.DetalleDTO;
@@ -42,6 +42,8 @@ public class CompraServiceImpl implements CompraService {
     @Override
     @Transactional
     public Compra registrarCompra(CompraDTO dto, String emailUsuario) {
+        // ESTE MÉTODO YA NO SE DEBERÍA USAR DIRECTAMENTE SI TODO PASA POR COTIZACIÓN
+        // PERO LO DEJAMOS POR COMPATIBILIDAD
         Proveedor proveedor = proveedorRepository.findById(dto.getProveedorId())
                 .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
         
@@ -53,7 +55,7 @@ public class CompraServiceImpl implements CompraService {
         compra.setUsuario(usuario);
         compra.setMontoTotal(dto.getTotal().doubleValue());
         
-        compra.setEstado("Registrada");
+        compra.setEstado("PENDIENTE"); // Nace pendiente de aprobación
         compra.setTipoDocumento("ORDEN_COMPRA"); 
         compra.setEstadoLogistico("PENDIENTE");
 
@@ -78,6 +80,12 @@ public class CompraServiceImpl implements CompraService {
         Compra compra = compraRepository.findById(compraId)
                 .orElseThrow(() -> new RuntimeException("Compra no encontrada"));
 
+        // 1. VALIDACIÓN DE APROBACIÓN
+        if (!"APROBADA".equals(compra.getEstado())) {
+            throw new RuntimeException("¡ALTO! No puedes recibir mercadería de una orden no aprobada o rechazada.");
+        }
+
+        // 2. VALIDACIÓN LOGÍSTICA
         if ("RECIBIDO".equals(compra.getEstadoLogistico())) {
             throw new RuntimeException("Esta compra ya fue recepcionada anteriormente.");
         }
@@ -85,12 +93,14 @@ public class CompraServiceImpl implements CompraService {
         Usuario almacenero = usuarioRepository.findByEmail(emailAlmacenero)
                 .orElseThrow(() -> new RuntimeException("Usuario almacen no encontrado"));
 
+        // 3. ACTUALIZAR STOCK
         for (DetalleCompra detalle : compra.getDetalle()) {
             Producto p = detalle.getProducto();
             p.setStockActual(p.getStockActual() + detalle.getCantidad());
             productoRepository.save(p);
         }
 
+        // 4. REGISTRAR EN KARDEX (MOVIMIENTOS)
         MovimientoAlmacen mov = new MovimientoAlmacen();
         mov.setFechaMovimiento(LocalDateTime.now());
         mov.setTipoMovimiento("ENTRADA"); 
@@ -104,29 +114,30 @@ public class CompraServiceImpl implements CompraService {
         compraRepository.save(compra);
     }
     
-    // === NUEVO MÉTODO ===
     @Override
     @Transactional
     public void registrarFacturaFisica(Integer compraId, String numeroFactura) {
         Compra compra = compraRepository.findById(compraId)
                 .orElseThrow(() -> new RuntimeException("Compra no encontrada"));
         
+        if (!"APROBADA".equals(compra.getEstado())) {
+            throw new RuntimeException("No se puede facturar una orden no aprobada.");
+        }
+        
         compra.setNumeroDocumentoFisico(numeroFactura);
-        compra.setTipoDocumento("FACTURA"); // Cambia el estado oficial
+        compra.setTipoDocumento("FACTURA"); 
         
         compraRepository.save(compra);
     }
     
     @Override
     public List<Compra> listarCotizaciones() {
-        // Solo devolvemos las que sean 'COTIZACION'
         return compraRepository.findByTipoDocumento("COTIZACION");
     }
 
     @Override
     @Transactional
     public void registrarCotizacion(CompraDTO dto, String emailUsuario) {
-        // Reutilizamos lógica similar a registrarCompra, pero cambiamos el TIPO
         Proveedor proveedor = proveedorRepository.findById(dto.getProveedorId())
                 .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
         
@@ -138,10 +149,9 @@ public class CompraServiceImpl implements CompraService {
         cotizacion.setUsuario(usuario);
         cotizacion.setMontoTotal(dto.getTotal().doubleValue());
         
-        // ESTADOS PARA COTIZACIÓN
-        cotizacion.setEstado("Borrador");
-        cotizacion.setTipoDocumento("COTIZACION"); // <--- LA CLAVE
-        cotizacion.setEstadoLogistico("NA");       // No aplica logística aún
+        cotizacion.setEstado("BORRADOR");
+        cotizacion.setTipoDocumento("COTIZACION"); 
+        cotizacion.setEstadoLogistico("NA");       
 
         for (DetalleDTO item : dto.getItems()) {
             Producto producto = productoRepository.findById(item.getProductoId())
@@ -169,9 +179,40 @@ public class CompraServiceImpl implements CompraService {
 
         // TRANSFORMACIÓN: De Cotización a Orden
         compra.setTipoDocumento("ORDEN_COMPRA");
-        compra.setEstado("Aprobada");
-        compra.setEstadoLogistico("PENDIENTE"); // Ahora sí espera mercadería
         
+        // AQUÍ ESTÁ EL CAMBIO IMPORTANTE:
+        // Antes pasaba a APROBADA, ahora pasa a PENDIENTE de aprobación del Admin.
+        compra.setEstado("PENDIENTE"); 
+        compra.setEstadoLogistico("PENDIENTE"); 
+        
+        compraRepository.save(compra);
+    }
+
+    // --- NUEVA LÓGICA DE APROBACIÓN ---
+
+    @Override
+    @Transactional
+    public void aprobarOrdenCompra(Integer compraId) {
+        Compra compra = compraRepository.findById(compraId)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+        
+        if (!"ORDEN_COMPRA".equals(compra.getTipoDocumento())) {
+            throw new RuntimeException("Solo se pueden aprobar Órdenes de Compra.");
+        }
+        
+        compra.setEstado("APROBADA");
+        compraRepository.save(compra);
+    }
+
+    @Override
+    @Transactional
+    public void rechazarOrdenCompra(Integer compraId) {
+        Compra compra = compraRepository.findById(compraId)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+        
+        // No se elimina, solo cambia de estado
+        compra.setEstado("RECHAZADA");
+        // Opcional: Podrías poner estado logistico en CANCELADO si quisieras ser explícito
         compraRepository.save(compra);
     }
 }

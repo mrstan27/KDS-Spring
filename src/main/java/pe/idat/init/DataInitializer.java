@@ -42,35 +42,46 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         
-        // --- 1. CREAR ROLES y USUARIO ADMIN (Lógica sin cambios) ---
-        Rol rolAdmin = null;
-        List<Rol> roles = rolRepository.findAll();
-        
-        if (roles.isEmpty()) {
-            rolAdmin = new Rol(); rolAdmin.setNombreRol("Administrador"); rolRepository.save(rolAdmin);
-            Rol rolVendedor = new Rol(); rolVendedor.setNombreRol("Vendedor"); rolRepository.save(rolVendedor);
-            Rol rolAlmacenero = new Rol(); rolAlmacenero.setNombreRol("Almacenero"); rolRepository.save(rolAlmacenero);
+        // --- 1. CREAR ROLES ---
+        if (rolRepository.count() == 0) {
+            crearRol("Administrador");
+            crearRol("Vendedor");
+            crearRol("Almacenero");
+            crearRol("Compras");
+            crearRol("Soporte");
             System.out.println("✅ Roles creados correctamente.");
         } else {
-            rolAdmin = roles.stream().filter(r -> r.getNombreRol().equals("Administrador")).findFirst().orElse(null);
             System.out.println("☑️ Los roles ya existen.");
         }
 
-        if (usuarioRepository.findByEmail("admin@admin.com").isEmpty() && rolAdmin != null) {
-            Usuario admin = new Usuario();
-            admin.setNombre("Super");
-            admin.setApellido("Admin");
-            admin.setEmail("admin@admin.com");
-            admin.setPasswordHash(passwordEncoder.encode("123456"));
-            admin.setActivo(true);
-            admin.setRol(rolAdmin);
-            usuarioRepository.save(admin);
-            System.out.println("😎 Usuario ADMIN creado: admin@admin.com / 123456");
-        } else {
-            System.out.println("☑️ El usuario ADMIN ya existe.");
-        }
+        // Cargar roles para asignar
+        List<Rol> roles = rolRepository.findAll();
+        Rol rolAdmin = buscarRol(roles, "Administrador");
+        Rol rolVendedor = buscarRol(roles, "Vendedor");
+        Rol rolAlmacenero = buscarRol(roles, "Almacenero");
+        Rol rolCompras = buscarRol(roles, "Compras");
+        Rol rolSoporte = buscarRol(roles, "Soporte");
 
-        // --- 2. CREAR CATEGORÍAS ---
+        // --- 2. CREAR USUARIOS PREDETERMINADOS (EMPRESARIALES) ---
+        // Contraseña por defecto: 123456
+
+        // Administrador
+        crearUsuarioSiNoExiste("admin@admin.com", "Super", "Admin", "123456", rolAdmin);
+
+        // Vendedor
+        crearUsuarioSiNoExiste("ventas@kds.com", "Juan", "Vendedor", "123456", rolVendedor);
+
+        // Almacenero
+        crearUsuarioSiNoExiste("almacen@kds.com", "Pedro", "Almacen", "123456", rolAlmacenero);
+
+        // Compras
+        crearUsuarioSiNoExiste("compras@kds.com", "Maria", "Compras", "123456", rolCompras);
+
+        // Soporte
+        crearUsuarioSiNoExiste("soporte@kds.com", "Tecnico", "Soporte", "123456", rolSoporte);
+
+
+        // --- 3. CREAR CATEGORÍAS ---
         if (categoriaRepository.count() == 0) {
             List<String> nombresCategorias = Arrays.asList(
                 "NEW IN", "NITE OUT", "OUTERWEAR", "ROPA", "JEANS", "POLOS", "BLACK SUNDAY", "ACCESORIOS"
@@ -88,7 +99,7 @@ public class DataInitializer implements CommandLineRunner {
         // Cargar todas las categorías para uso rápido en el paso 3
         this.todasLasCategorias = categoriaRepository.findAll();
 
-        // --- 3. CREAR PRODUCTOS POR CATEGORÍA (DETALLADO Y ESPECÍFICO) ---
+        // --- 4. CREAR PRODUCTOS POR CATEGORÍA (DETALLADO Y ESPECÍFICO) ---
 
         // A. CATEGORÍA JEANS (10 ítems)
         crearProductosDetallados("JEANS", "jeans", 
@@ -257,11 +268,34 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println("🎉 Todos los productos de prueba fueron cargados detalladamente. Total de productos: " + productoRepository.count());
     }
 
-    // --- FUNCIÓN AUXILIAR DE SOPORTE ---
+    // --- FUNCIONES AUXILIARES ---
     
-    /**
-     * Busca la categoría por nombre en la lista precargada.
-     */
+    private void crearRol(String nombreRol) {
+        Rol rol = new Rol();
+        rol.setNombreRol(nombreRol);
+        rolRepository.save(rol);
+    }
+
+    private Rol buscarRol(List<Rol> roles, String nombreRol) {
+        return roles.stream().filter(r -> r.getNombreRol().equals(nombreRol)).findFirst().orElse(null);
+    }
+
+    private void crearUsuarioSiNoExiste(String email, String nombre, String apellido, String password, Rol rol) {
+        if (usuarioRepository.findByEmail(email).isEmpty() && rol != null) {
+            Usuario usuario = new Usuario();
+            usuario.setNombre(nombre);
+            usuario.setApellido(apellido);
+            usuario.setEmail(email);
+            usuario.setPasswordHash(passwordEncoder.encode(password));
+            usuario.setActivo(true);
+            usuario.setRol(rol);
+            usuarioRepository.save(usuario);
+            System.out.println("👤 Usuario creado: " + email + " (" + rol.getNombreRol() + ")");
+        } else {
+            System.out.println("☑️ El usuario " + email + " ya existe.");
+        }
+    }
+
     private Categoria buscarCategoria(String nombre) {
         return this.todasLasCategorias.stream()
             .filter(c -> c.getNombreCategoria().equals(nombre))
@@ -269,10 +303,6 @@ public class DataInitializer implements CommandLineRunner {
             .orElse(null);
     }
 
-    /**
-     * Crea y guarda productos detallados en la BD, APLICANDO LA LÓGICA DEL PREFIJO
-     * para asegurar que las URLs de imagen sean correctas (ej: 'outerwear/out1.webp').
-     */
     private void crearProductosDetallados(String nombreCategoria, String subDirectorio, String[][] productosData) {
         
         // Solo ejecuta si la tabla para esta categoría está vacía
@@ -287,8 +317,7 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
         
-        // Iteramos sobre los datos específicos y los guardamos
-        for (int i = 0; i < productosData.length; i++) { // <-- INICIO DEL CICLO FOR
+        for (int i = 0; i < productosData.length; i++) {
             String[] datos = productosData[i];
             
             Producto p = new Producto();
@@ -298,54 +327,24 @@ public class DataInitializer implements CommandLineRunner {
             p.setStockActual(50); // Stock base
             p.setCategoria(categoria);
             
-            // =========================================================================
-            // 🔑 LÓGICA DE PREFIJOS DE IMAGEN CORREGIDA
-            // =========================================================================
             String prefijoImagen;
-            int numItem = i + 1; // Ya que se usa 'i', es mejor definirlo aquí
+            int numItem = i + 1;
             String carpetaReal = subDirectorio; 
 
             switch (subDirectorio) {
-                case "outerwear":
-                    prefijoImagen = "out"; 
-                    break;
-                case "nite_out":
-                    prefijoImagen = "nite"; 
-                    break;
-                case "new_in":
-                    prefijoImagen = "new"; 
-                    break;
-                case "jeans":
-                    prefijoImagen = "jean"; 
-                    break;
-                case "rebajas":
-                    prefijoImagen = "rebajas"; 
-                    break;
-                // Para Polos, Ropa, Accesorios, el prefijo coincide con el nombre de la carpeta
-                case "polos":
-                case "ropa":
-                case "accesorios":
-                default:
-                    prefijoImagen = subDirectorio; 
-                    break;
+                case "outerwear": prefijoImagen = "out"; break;
+                case "nite_out": prefijoImagen = "nite"; break;
+                case "new_in": prefijoImagen = "new"; break;
+                case "jeans": prefijoImagen = "jean"; break;
+                case "rebajas": prefijoImagen = "rebajas"; break;
+                default: prefijoImagen = subDirectorio; break;
             }
 
-         // Lógica simplificada después del switch
-            String extension = ".webp"; // <--- Siempre .webp
-            int numItem1 = i + 1;
-
-            // Genera la URL: [carpeta]/[prefijo][número][.webp]
-            p.setImagenUrl(subDirectorio + "/" + prefijoImagen + numItem1 + extension);
-
-            // -------------------------------------------------------------------------
-            // 3. CONSTRUCCIÓN FINAL DE LA URL
-            // -------------------------------------------------------------------------
-            // Genera la URL: [carpeta]/[prefijo][número][.extensión]
-            p.setImagenUrl(carpetaReal + "/" + prefijoImagen + numItem1 + extension); 
-            // =========================================================================
+            String extension = ".webp"; 
+            p.setImagenUrl(carpetaReal + "/" + prefijoImagen + numItem + extension); 
             
             productoRepository.save(p);
-        } // <-- FIN DEL CICLO FOR
+        }
         System.out.println("✅ Productos de " + nombreCategoria + " insertados: " + productosData.length);
-    } // <-- FIN DE LA FUNCIÓN
+    } 
 }

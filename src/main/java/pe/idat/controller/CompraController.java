@@ -8,12 +8,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import jakarta.servlet.http.HttpServletResponse; // Importante para descargar
+import jakarta.servlet.http.HttpServletResponse; 
 import pe.idat.dto.CompraDTO;
 import pe.idat.entity.Compra;
 import pe.idat.repository.CompraRepository;
 import pe.idat.service.CompraService;
-import pe.idat.service.PdfService; // Inyectamos el servicio nuevo
+import pe.idat.service.PdfService; 
 import pe.idat.service.ProductoService;
 import pe.idat.service.ProveedorService;
 
@@ -32,10 +32,14 @@ public class CompraController {
     @Autowired
     private CompraRepository compraRepository;
     @Autowired
-    private PdfService pdfService; // Inyección del servicio PDF
+    private PdfService pdfService; 
 
     @GetMapping
     public String listar(Model model) {
+        // Excluimos las cotizaciones de esta lista principal, solo Órdenes y Facturas
+        // Ojo: Si quieres ver todo, usa findAll. Si quieres filtrar, usa un custom query.
+        // Por ahora findAll está bien porque en la vista filtramos por tipoDocumento visualmente si es necesario
+        // Pero DataInitializer crea Ordenes, así que todo bien.
         model.addAttribute("listaCompras", compraRepository.findAll(Sort.by(Sort.Direction.DESC, "compraId"))); 
         return "compra/listar";
     }
@@ -81,14 +85,12 @@ public class CompraController {
         return "redirect:/compras";
     }
     
-    // === NUEVO ENDPOINT PARA PDF ===
     @GetMapping("/pdf/{id}")
     public void descargarPdf(@PathVariable Integer id, HttpServletResponse response) throws IOException {
         Compra compra = compraRepository.findById(id).orElse(null);
         if(compra != null) {
             response.setContentType("application/pdf");
             String headerKey = "Content-Disposition";
-            // 'attachment' fuerza la descarga. 'inline' lo abriría en el navegador.
             String headerValue = "attachment; filename=Orden_" + id + ".pdf";
             response.setHeader(headerKey, headerValue);
             
@@ -96,28 +98,47 @@ public class CompraController {
         }
     }
     
- // ... código anterior ...
+    // --- NUEVOS ENDPOINTS DE APROBACIÓN ---
+    
+    @GetMapping("/aprobar/{id}")
+    public String aprobar(@PathVariable Integer id, RedirectAttributes flash) {
+        try {
+            compraService.aprobarOrdenCompra(id);
+            flash.addFlashAttribute("success", "Orden #" + id + " APROBADA. Ahora puede ser recepcionada.");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", "Error al aprobar: " + e.getMessage());
+        }
+        return "redirect:/compras";
+    }
+
+    @GetMapping("/rechazar/{id}")
+    public String rechazar(@PathVariable Integer id, RedirectAttributes flash) {
+        try {
+            compraService.rechazarOrdenCompra(id);
+            flash.addFlashAttribute("error", "Orden #" + id + " RECHAZADA. Se mantendrá en el historial.");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", "Error al rechazar: " + e.getMessage());
+        }
+        return "redirect:/compras";
+    }
 
     // ==========================================
     //        CONTROLADOR DE COTIZACIONES
     // ==========================================
 
-    // 1. Listar Cotizaciones
     @GetMapping("/cotizaciones")
     public String listarCotizaciones(Model model) {
         model.addAttribute("listaCotizaciones", compraService.listarCotizaciones());
-        return "compra/cotizacion-listar"; // Nueva vista
+        return "compra/cotizacion-listar"; 
     }
 
-    // 2. Formulario Nueva Cotización
     @GetMapping("/cotizaciones/nueva")
     public String nuevaCotizacion(Model model) {
         model.addAttribute("listaProveedores", proveedorService.listarTodos());
         model.addAttribute("listaProductos", productoService.listarProductos());
-        return "compra/cotizacion-form"; // Nueva vista
+        return "compra/cotizacion-form"; 
     }
 
-    // 3. Guardar Cotización (Recibe JSON)
     @PostMapping("/cotizaciones/guardar")
     @ResponseBody
     public String guardarCotizacion(@RequestBody CompraDTO compraDTO, Authentication auth) {
@@ -130,15 +151,14 @@ public class CompraController {
         }
     }
 
-    // 4. Aprobar (Convertir a Orden)
     @GetMapping("/cotizaciones/aprobar/{id}")
     public String aprobarCotizacion(@PathVariable Integer id, RedirectAttributes flash) {
         try {
             compraService.convertirCotizacionAOrden(id);
-            flash.addFlashAttribute("success", "¡Cotización aprobada! Se ha generado la Orden de Compra #" + id);
+            flash.addFlashAttribute("success", "Cotización convertida. La Orden #" + id + " está PENDIENTE de aprobación administrativa.");
         } catch (Exception e) {
-            flash.addFlashAttribute("error", "Error al aprobar: " + e.getMessage());
+            flash.addFlashAttribute("error", "Error al procesar: " + e.getMessage());
         }
-        return "redirect:/compras"; // Nos manda al listado de Órdenes
+        return "redirect:/compras"; 
     }
 }
