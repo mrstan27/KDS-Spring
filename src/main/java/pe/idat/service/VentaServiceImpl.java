@@ -107,4 +107,10 @@ public class VentaServiceImpl implements VentaService {
         mov.setUsuario(responsable); // Puede ser null en venta web
         movimientoRepository.save(mov);
     }
+    
+    // --- NUEVO: Implementación para reportes ---
+    @Override
+    public List<Venta> listarVentas() {
+        return ventaRepository.findAll();
+    }
 }

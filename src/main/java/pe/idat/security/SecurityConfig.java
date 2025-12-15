@@ -41,47 +41,56 @@ public class SecurityConfig {
                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
 
-                // RUTAS PÚBLICAS (Login y Tienda)
+                // RUTAS PÚBLICAS
                 .requestMatchers("/", "/index").permitAll()
                 .requestMatchers("/login/**", "/auth/**").permitAll()
                 .requestMatchers("/cliente/nuevo", "/cliente/guardar").permitAll()
-                // Catálogo público
                 .requestMatchers("/productos/categoria/**", "/productos/detalle/**").permitAll() 
-                // Carrito público (ver)
                 .requestMatchers("/carrito", "/carrito/agregar/**", "/carrito/eliminar/**").permitAll()
 
-                // --- REGLAS DE NEGOCIO ---
+                // --- REGLAS DE NEGOCIO CORREGIDAS ---
 
-                // 1. GESTIÓN DE PRODUCTOS Y CATEGORÍAS (Crear/Editar)
-                // CAMBIO: Ahora es 'Compras' quien define el producto, no Almacén.
+                // 1. APROBACIÓN DE ÓRDENES (Solo Administrador) - ¡CRÍTICO!
+                // Esto evita que 'Compras' pueda aprobar.
+                .requestMatchers("/compras/aprobar/**", "/compras/rechazar/**")
+                .hasAuthority("Administrador")
+
+                // 2. RECEPCIÓN Y FACTURACIÓN (Admin y Almacenero)
+                // Ahora el almacenero tiene permiso explícito para facturar y recepcionar.
+                .requestMatchers("/compras/recepcionar/**", "/compras/facturar")
+                .hasAnyAuthority("Administrador", "Almacenero")
+
+                // 3. GESTIÓN DE PRODUCTOS (Admin y Compras)
                 .requestMatchers("/productos/nuevo", "/productos/guardar", "/productos/editar/**", "/productos/eliminar/**", 
                                  "/categorias/**")
                 .hasAnyAuthority("Administrador", "Compras") 
 
-                // 2. COMPRAS Y PROVEEDORES (Gestión)
+                // 4. GESTIÓN DE COMPRAS/COTIZACIONES (Admin y Compras)
+                // Nota: '/compras' (listado) cae aquí si no se especifica antes, permitiendo ver la lista a ambos.
                 .requestMatchers("/compras/cotizaciones/**", "/proveedor/**")
                 .hasAnyAuthority("Administrador", "Compras")
 
-                // 3. RECEPCIÓN EN ALMACÉN (Solo registrar ingreso)
-                .requestMatchers("/compras/recepcion/**", "/movimientos/**")
+                // 5. MOVIMIENTOS (Kardex)
+                .requestMatchers("/movimientos/**")
                 .hasAnyAuthority("Administrador", "Almacenero")
                 
-                // 4. VENTAS WEB (Checkout cliente)
-                .requestMatchers("/carrito/checkout", "/carrito/procesar-pago", "/mi-cuenta/**")
-                .hasAuthority("CLIENTE")
-
-                // 5. VENTAS POS (Vendedor en tienda)
-                .requestMatchers("/ventas/**")
-                .hasAnyAuthority("Administrador", "Vendedor")
+                // 6. VENTAS WEB Y POS
+                .requestMatchers("/carrito/checkout", "/carrito/procesar-pago", "/mi-cuenta/**").hasAuthority("CLIENTE")
+                .requestMatchers("/ventas/**").hasAnyAuthority("Administrador", "Vendedor")
                 
-                // 6. GESTIÓN DE USUARIOS
-                .requestMatchers("/usuarios/**", "/roles/**")
-                .hasAuthority("Administrador")
+                // 7. REPORTES
+                .requestMatchers("/reportes/**").hasAnyAuthority("Administrador", "Vendedor", "Almacenero")
+                
+                // 8. ADMIN
+                .requestMatchers("/usuarios/**", "/roles/**").hasAuthority("Administrador")
+
+                // Permite acceso general a /compras para ver la lista (filtrado visualmente en JSP)
+                .requestMatchers("/compras").authenticated() 
 
                 .anyRequest().authenticated()
             )
             .formLogin(login -> login
-                .loginPage("/login/loginusuario") // Login empleados
+                .loginPage("/login/loginusuario")
                 .loginProcessingUrl("/auth/login-process")
                 .defaultSuccessUrl("/login/menu", true)
                 .permitAll()

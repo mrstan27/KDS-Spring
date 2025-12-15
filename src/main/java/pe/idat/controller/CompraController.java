@@ -11,7 +11,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.servlet.http.HttpServletResponse; 
 import pe.idat.dto.CompraDTO;
 import pe.idat.entity.Compra;
+import pe.idat.entity.Usuario; // Importar
 import pe.idat.repository.CompraRepository;
+import pe.idat.repository.UsuarioRepository; // Importar
 import pe.idat.service.CompraService;
 import pe.idat.service.PdfService; 
 import pe.idat.service.ProductoService;
@@ -33,13 +35,20 @@ public class CompraController {
     private CompraRepository compraRepository;
     @Autowired
     private PdfService pdfService; 
+    
+    // --- CORRECCIÓN: Inyectamos UsuarioRepository ---
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     @GetMapping
-    public String listar(Model model) {
-        // Excluimos las cotizaciones de esta lista principal, solo Órdenes y Facturas
-        // Ojo: Si quieres ver todo, usa findAll. Si quieres filtrar, usa un custom query.
-        // Por ahora findAll está bien porque en la vista filtramos por tipoDocumento visualmente si es necesario
-        // Pero DataInitializer crea Ordenes, así que todo bien.
+    public String listar(Model model, Authentication auth) {
+        // 1. Obtener el usuario autenticado para enviarlo a la vista
+        if (auth != null) {
+            String email = auth.getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+            model.addAttribute("usuario", usuario); // ¡CRÍTICO PARA LOS BOTONES DEL ALMACENERO!
+        }
+
         model.addAttribute("listaCompras", compraRepository.findAll(Sort.by(Sort.Direction.DESC, "compraId"))); 
         return "compra/listar";
     }
@@ -98,7 +107,7 @@ public class CompraController {
         }
     }
     
-    // --- NUEVOS ENDPOINTS DE APROBACIÓN ---
+    // --- ENDPOINTS DE APROBACIÓN (Ahora protegidos en SecurityConfig) ---
     
     @GetMapping("/aprobar/{id}")
     public String aprobar(@PathVariable Integer id, RedirectAttributes flash) {
@@ -154,6 +163,7 @@ public class CompraController {
     @GetMapping("/cotizaciones/aprobar/{id}")
     public String aprobarCotizacion(@PathVariable Integer id, RedirectAttributes flash) {
         try {
+            // Esto solo convierte a Orden PENDIENTE. La aprobación final es del Admin.
             compraService.convertirCotizacionAOrden(id);
             flash.addFlashAttribute("success", "Cotización convertida. La Orden #" + id + " está PENDIENTE de aprobación administrativa.");
         } catch (Exception e) {

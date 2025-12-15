@@ -39,9 +39,7 @@
         </c:if>
 
         <%-- 2. GESTIÓN COMERCIAL (Admin y Compras) --%>
-        <%-- Aquí se crean Productos, Categorías y se busca Proveedores --%>
         <c:if test="${usuario.rol.nombreRol == 'Administrador' || usuario.rol.nombreRol == 'Compras'}">
-            
             <a href="${pageContext.request.contextPath}/productos" class="card-menu">
                 <div class="card-icon"><i class="fa-solid fa-shirt"></i></div>
                 <div class="card-title">Productos</div>
@@ -94,6 +92,17 @@
                 <div class="card-icon"><i class="fa-solid fa-user-group"></i></div>
                 <div class="card-title">Clientes</div>
                 <div class="card-desc">Cartera de clientes</div>
+            </a>
+        </c:if>
+
+        <%-- 5. REPORTES (Admin, Vendedor, Almacenero) --%>
+        <c:if test="${usuario.rol.nombreRol == 'Administrador' || usuario.rol.nombreRol == 'Almacenero' || usuario.rol.nombreRol == 'Vendedor'}">
+            <a href="${pageContext.request.contextPath}/reportes" class="card-menu">
+                <div class="card-icon">
+                    <i class="fa-solid fa-file-pdf"></i>
+                </div>
+                <div class="card-title">Reportes</div>
+                <div class="card-desc">Ventas y Stock PDF</div>
             </a>
         </c:if>
 
