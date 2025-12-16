@@ -36,9 +36,10 @@
 
         .product-info { text-align: left; margin-top: auto; }
         .product-name { font-size: 0.9rem; font-weight: 700; text-transform: uppercase; color: #000; text-decoration: none; display: block; margin-bottom: 5px; }
+        .product-name:hover { color: var(--kids-red); }
         .product-price { font-size: 1rem; color: #555; font-weight: 400; }
 
-        /* NUEVOS ESTILOS PARA EL CONTADOR Y BOTÓN */
+        /* CONTADOR Y BOTÓN */
         .quantity-control { display: flex; align-items: center; border: 1px solid #000; margin-top: 10px; }
         .btn-qty { background: transparent; border: none; padding: 5px 15px; font-size: 1.2rem; cursor: pointer; color: #555; }
         .btn-qty:hover { color: var(--kids-red); }
@@ -96,7 +97,6 @@
                                 ${sessionScope.carrito.size()} </span>
                         </c:if>
                     </a>
-
                 </div>
             </div>
         </div>
@@ -129,46 +129,48 @@
                 <div class="col-6 col-md-4 col-lg-3">
                     <div class="product-card">
                         
-                        <div class="img-container">
-                            <c:choose>
-                                <c:when test="${not empty p.imagenUrl}">
-                                    <img src="${pageContext.request.contextPath}/images/productos/${p.imagenUrl}" 
-                                         alt="${p.nombre}"
-                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x400?text=KIDS';">
-                                </c:when>
-                                <c:otherwise>
-                                    <img src="https://via.placeholder.com/300x400?text=SIN+FOTO" alt="Demo">
-                                </c:otherwise>
-                            </c:choose>
-                            <c:if test="${p.stockActual <= 0}">
-                                <div class="position-absolute top-0 end-0 bg-dark text-white px-2 py-1 m-2 small fw-bold">AGOTADO</div>
-                            </c:if>
-                        </div>
-
-                        <div class="product-info">
-                            <a href="#" class="product-name">${p.nombre}</a>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="product-price">S/ ${p.precioVenta}</span>
+                        <a href="${pageContext.request.contextPath}/productos/detalle/${p.productoId}" style="text-decoration: none; color: inherit;">
+                            <div class="img-container">
+                                <c:choose>
+                                    <c:when test="${not empty p.imagenUrl}">
+                                        <img src="${pageContext.request.contextPath}/images/productos/${p.imagenUrl}" 
+                                             alt="${p.nombre}"
+                                             onerror="this.onerror=null; this.src='https://via.placeholder.com/300x400?text=KIDS';">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <img src="https://via.placeholder.com/300x400?text=SIN+FOTO" alt="Demo">
+                                    </c:otherwise>
+                                </c:choose>
+                                <c:if test="${p.stockActual <= 0}">
+                                    <div class="position-absolute top-0 end-0 bg-dark text-white px-2 py-1 m-2 small fw-bold">AGOTADO</div>
+                                </c:if>
                             </div>
-                            
-                            <c:choose>
-                                <c:when test="${p.stockActual > 0}">
-                                    <form action="${pageContext.request.contextPath}/carrito/agregar/${p.productoId}" method="get">
-                                        <div class="d-flex">
-                                            <div class="quantity-control me-2">
-                                                <button type="button" class="btn-qty" onclick="updateQty(this, -1)">-</button>
-                                                <input type="number" name="cantidad" value="1" min="1" max="${p.stockActual}" class="input-qty" readonly>
-                                                <button type="button" class="btn-qty" onclick="updateQty(this, 1)">+</button>
-                                            </div>
-                                            <button type="submit" class="btn-shop">AÑADIR</button>
+
+                            <div class="product-info">
+                                <span class="product-name">${p.nombre}</span>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="product-price">S/ ${p.precioVenta}</span>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <c:choose>
+                            <c:when test="${p.stockActual > 0}">
+                                <form action="${pageContext.request.contextPath}/carrito/agregar/${p.productoId}" method="get">
+                                    <div class="d-flex">
+                                        <div class="quantity-control me-2">
+                                            <button type="button" class="btn-qty" onclick="updateQty(this, -1)">-</button>
+                                            <input type="number" name="cantidad" value="1" min="1" max="${p.stockActual}" class="input-qty" readonly>
+                                            <button type="button" class="btn-qty" onclick="updateQty(this, 1)">+</button>
                                         </div>
-                                    </form>
-                                </c:when>
-                                <c:otherwise>
-                                    <button class="btn-shop" style="background-color: #eee; color:#aaa; border:none;" disabled>SIN STOCK</button>
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
+                                        <button type="submit" class="btn-shop">AÑADIR</button>
+                                    </div>
+                                </form>
+                            </c:when>
+                            <c:otherwise>
+                                <button class="btn-shop" style="background-color: #eee; color:#aaa; border:none;" disabled>SIN STOCK</button>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
             </c:forEach>
@@ -225,7 +227,6 @@
             const max = parseInt(input.max);
             
             value += change;
-            
             if (value >= min && value <= max) {
                 input.value = value;
             }

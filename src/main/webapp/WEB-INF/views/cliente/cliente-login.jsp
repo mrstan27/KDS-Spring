@@ -13,7 +13,8 @@
             background-size: cover; background-position: center;
             background-repeat: no-repeat; background-attachment: fixed;
             display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh; margin: 0;
+            font-family: 'Segoe UI', sans-serif;
         }
         .login-card {
             background-color: rgba(255, 255, 255, 0.95);
@@ -44,14 +45,13 @@
         </div>
     </c:if>
 
-    <form action="${pageContext.request.contextPath}/login" method="post">
-        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+    <form action="${pageContext.request.contextPath}/auth/login-process" method="post">
         
         <input type="hidden" name="tipoAcceso" value="cliente"/> 
 
         <div class="form-group">
             <label class="form-label" style="text-align: left;">Correo Electrónico</label>
-            <input type="email" name="email" class="form-input" required placeholder="ejemplo@correo.com"/>
+            <input type="email" name="username" class="form-input" required placeholder="ejemplo@correo.com"/>
         </div>
 
         <div class="form-group">
@@ -63,7 +63,8 @@
     </form>
     
     <div style="margin-top: 25px; font-size: 14px; color: #666;">
-        ¿No tienes cuenta? <br>
+        ¿No tienes cuenta?
+        <br>
     </div>
     <a href="${pageContext.request.contextPath}/cliente/nuevo" class="btn-registrar" style="display:inline-block; text-decoration:none; line-height:15px; color:white;">
         Registrate

@@ -1,25 +1,28 @@
 package pe.idat.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import pe.idat.service.ProductoService;
+import pe.idat.repository.ProductoRepository;
 
 @Controller
-@RequestMapping({"/", "/index"}) // Maneja la raíz y /index
+@RequestMapping({"/", "/index"})
 public class HomeController {
 
     @Autowired
-    private ProductoService productoService;
+    private ProductoRepository productoRepository;
 
     @GetMapping
     public String mostrarIndex(Model model) {
-        // Traemos productos de "NEW IN" para mostrarlos como destacados en la portada
-        // Esto asegura que la portada esté sincronizada con la base de datos
-        model.addAttribute("productosDestacados", productoService.listarPorNombreCategoria("NEW IN"));
+        // CORRECCIÓN: Mostrar los productos más recientes creados, sin importar la categoría.
+        // Esto garantiza que lo que acabas de agregar al inventario aparezca en la portada.
+        model.addAttribute("productosDestacados", 
+            productoRepository.findAll(Sort.by(Sort.Direction.DESC, "productoId")));
+            
         return "index";   
     }
 }

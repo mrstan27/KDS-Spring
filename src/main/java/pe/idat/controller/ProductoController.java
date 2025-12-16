@@ -15,12 +15,12 @@ import pe.idat.service.ProductoService;
 import pe.idat.service.ProveedorService;
 import pe.idat.repository.ProductoRepository;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/productos")
@@ -48,7 +48,6 @@ public class ProductoController {
     public String nuevo(Model model) {
         model.addAttribute("producto", new Producto());
         model.addAttribute("listaCategorias", categoriaService.listarCategorias());
-        // IMPORTANTE: Enviamos la lista de proveedores a la vista
         model.addAttribute("listaProveedores", proveedorService.listarTodos());
         return "producto/formulario";
     }
@@ -68,33 +67,26 @@ public class ProductoController {
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Producto producto, 
                           @RequestParam("file") MultipartFile imagen,
-                          @RequestParam("proveedorId") Integer proveedorId, // Recibe el ID del select
-                          @RequestParam("categoriaId") Integer categoriaId, // Recibe el ID del select
+                          @RequestParam("proveedorId") Integer proveedorId,
+                          @RequestParam("categoriaId") Integer categoriaId,
                           RedirectAttributes flash) {
         try {
-            // 1. Imagen
             if (!imagen.isEmpty()) {
                 String nombreImagen = UUID.randomUUID().toString() + "_" + imagen.getOriginalFilename();
                 Path rutaImagen = Paths.get("src//main//webapp//images//productos//" + nombreImagen);
-                Files.createDirectories(rutaImagen.getParent()); // Asegura que la carpeta exista
+                Files.createDirectories(rutaImagen.getParent());
                 Files.write(rutaImagen, imagen.getBytes());
                 producto.setImagenUrl(nombreImagen);
-            } else {
-                if (producto.getProductoId() == null) producto.setImagenUrl("default.jpg");
-                // Si es editar, el hidden field en el JSP debe mantener la URL, o JPA lo maneja si el objeto está atado
-            }
-
-            // 2. Vincular Proveedor (OBLIGATORIO)
+            } 
+            
             Proveedor prov = new Proveedor();
             prov.setProveedorId(proveedorId);
             producto.setProveedor(prov);
             
-            // 3. Vincular Categoría
             Categoria cat = new Categoria();
             cat.setCategoriaId(categoriaId);
             producto.setCategoria(cat);
 
-            // 4. Stock Inicial (Siempre 0 al crear)
             if(producto.getProductoId() == null) {
                 producto.setStockActual(0);
             }
@@ -122,7 +114,42 @@ public class ProductoController {
         return "redirect:/productos";
     }
 
-    // API para el AJAX de Cotizaciones
+    @GetMapping("/categoria/{nombreCategoria}")
+    public String listarPorCategoria(@PathVariable String nombreCategoria, Model model) {
+        String nombreBuscado = nombreCategoria.replace("-", " ").toUpperCase();
+        List<Producto> productos = productoService.listarPorNombreCategoria(nombreBuscado);
+        
+        model.addAttribute("listaProductos", productos);
+        model.addAttribute("tituloCategoria", nombreBuscado);
+        
+        return "producto/catalogo";
+    }
+
+    // --- NUEVO: VISTA DE DETALLE DEL PRODUCTO ---
+    @GetMapping("/detalle/{id}")
+    public String verDetalle(@PathVariable Integer id, Model model) {
+        Producto p = productoService.obtenerProductoPorId(id);
+        
+        if (p == null) {
+            return "redirect:/index";
+        }
+        
+        model.addAttribute("p", p);
+        
+        // Lógica de Productos Sugeridos (Misma categoría, excluyendo el actual)
+        List<Producto> sugeridos = productoService.listarPorNombreCategoria(p.getCategoria().getNombreCategoria());
+        
+        // Filtramos para que no salga el mismo producto que estamos viendo
+        List<Producto> filtrados = sugeridos.stream()
+                .filter(prod -> !prod.getProductoId().equals(id))
+                .limit(4) // Máximo 4 sugerencias
+                .collect(Collectors.toList());
+        
+        model.addAttribute("sugeridos", filtrados);
+        
+        return "producto/detalle";
+    }
+
     @GetMapping("/api/listarPorProveedor/{id}")
     @ResponseBody
     public List<Producto> listarPorProveedorAPI(@PathVariable Integer id) {

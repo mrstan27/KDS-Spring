@@ -126,13 +126,13 @@ body {
 .quantity-control {
     display: flex; 
     align-items: center; 
-    border: 1px solid #000; 
+    border: 1px solid #000;
     height: 38px; /* Altura para igualar botones */
 }
 .btn-qty { 
     background: transparent; 
     border: none; 
-    padding: 0 10px; 
+    padding: 0 10px;
     font-size: 1.2rem; 
     cursor: pointer; 
     color: #555;
@@ -140,7 +140,7 @@ body {
 }
 .btn-qty:hover { color: var(--kids-red); }
 .input-qty { 
-    width: 35px; 
+    width: 35px;
     text-align: center; 
     border: none; 
     font-weight: bold; 
@@ -149,14 +149,15 @@ body {
 }
 .input-qty::-webkit-outer-spin-button, 
 .input-qty::-webkit-inner-spin-button { 
-    -webkit-appearance: none; margin: 0; 
+    -webkit-appearance: none;
+    margin: 0; 
 }
 
 /* Botón Añadir actualizado */
 .btn-add-custom {
     background-color: #000; 
     color: #fff; 
-    border: 1px solid #000; 
+    border: 1px solid #000;
     font-size: 0.8rem;
     font-weight: bold;
     flex-grow: 1;
@@ -166,6 +167,16 @@ body {
 .btn-add-custom:hover {
     background-color: var(--kids-red); 
     border-color: var(--kids-red);
+}
+
+/* Link invisible para envolver la tarjeta */
+.card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+.card-link:hover .product-name {
+    color: var(--kids-red);
 }
 
 /* ------------------------------------ */
@@ -312,7 +323,7 @@ footer {
 
 	<div class="container my-5">
 		<div class="text-center mb-5">
-			<h2 class="fw-bold text-uppercase">Lo Nuevo (New In)</h2>
+			<h2 class="fw-bold text-uppercase">Últimos Ingresos</h2>
 			<p class="text-muted">Directo del almacén a tu armario</p>
 		</div>
 		
@@ -335,60 +346,57 @@ footer {
 			<c:forEach items="${productosDestacados}" var="p" end="7">
 				<div class="col-6 col-md-4 col-lg-3">
 					<div class="card border-0 h-100">
-						<div
-							style="position: relative; padding-top: 125%; overflow: hidden; background: #f0f0f0;">
-							<img
-								src="${pageContext.request.contextPath}/images/productos/${p.imagenUrl}"
-								class="position-absolute top-0 start-0 w-100 h-100"
-								style="object-fit: cover;" alt="${p.nombre}"
-								onerror="this.src='https://via.placeholder.com/300x400?text=KIDS'">
+						<a href="${pageContext.request.contextPath}/productos/detalle/${p.productoId}" class="card-link">
+							<div style="position: relative; padding-top: 125%; overflow: hidden; background: #f0f0f0;">
+								<img
+									src="${pageContext.request.contextPath}/images/productos/${p.imagenUrl}"
+									class="position-absolute top-0 start-0 w-100 h-100"
+									style="object-fit: cover; transition: transform 0.5s;" alt="${p.nombre}"
+									onmouseover="this.style.transform='scale(1.05)'"
+									onmouseout="this.style.transform='scale(1)'"
+									onerror="this.src='https://via.placeholder.com/300x400?text=KIDS'">
+	
+								<c:if test="${p.stockActual <= 0}">
+									<div class="position-absolute top-0 end-0 bg-dark text-white px-2 py-1 m-2 small fw-bold">AGOTADO</div>
+								</c:if>
+								<c:if test="${p.stockActual > 0 && p.stockActual < 5}">
+									<div class="position-absolute top-0 end-0 bg-warning text-dark px-2 py-1 m-2 small fw-bold">¡ÚLTIMOS ${p.stockActual}!</div>
+								</c:if>
+							</div>
+	
+							<div class="card-body text-center px-0">
+								<h6 class="card-title fw-bold text-uppercase product-name" style="font-size: 0.9rem;">${p.nombre}</h6>
+								<p class="card-text text-muted">S/ ${p.precioVenta}</p>
+							</div>
+						</a>
 
-							<c:if test="${p.stockActual <= 0}">
-								<div
-									class="position-absolute top-0 end-0 bg-dark text-white px-2 py-1 m-2 small fw-bold">AGOTADO</div>
-							</c:if>
-							<c:if test="${p.stockActual > 0 && p.stockActual < 5}">
-								<div
-									class="position-absolute top-0 end-0 bg-warning text-dark px-2 py-1 m-2 small fw-bold">¡ÚLTIMOS
-									${p.stockActual}!</div>
-							</c:if>
-						</div>
-
-						<div class="card-body text-center px-0">
-							<h6 class="card-title fw-bold text-uppercase"
-								style="font-size: 0.9rem;">${p.nombre}</h6>
-							<p class="card-text text-muted">S/ ${p.precioVenta}</p>
-
-							<c:choose>
-								<c:when test="${p.stockActual > 0}">
-									<form action="${pageContext.request.contextPath}/carrito/agregar/${p.productoId}" method="get">
-										<div class="d-flex align-items-center mt-2 px-2">
-											<div class="quantity-control me-2">
-												<button type="button" class="btn-qty" onclick="updateQty(this, -1)">-</button>
-												<input type="number" name="cantidad" value="1" min="1" max="${p.stockActual}" class="input-qty" readonly>
-												<button type="button" class="btn-qty" onclick="updateQty(this, 1)">+</button>
-											</div>
-											<button type="submit" class="btn btn-add-custom py-2">AÑADIR</button>
+						<c:choose>
+							<c:when test="${p.stockActual > 0}">
+								<form action="${pageContext.request.contextPath}/carrito/agregar/${p.productoId}" method="get">
+									<div class="d-flex align-items-center mt-2 px-2">
+										<div class="quantity-control me-2">
+											<button type="button" class="btn-qty" onclick="updateQty(this, -1)">-</button>
+											<input type="number" name="cantidad" value="1" min="1" max="${p.stockActual}" class="input-qty" readonly>
+											<button type="button" class="btn-qty" onclick="updateQty(this, 1)">+</button>
 										</div>
-									</form>
-								</c:when>
-								<c:otherwise>
-									<div class="px-2">
-										<button class="btn btn-secondary rounded-0 w-100 btn-sm fw-bold" disabled>SIN STOCK</button>
+										<button type="submit" class="btn btn-add-custom py-2">AÑADIR</button>
 									</div>
-								</c:otherwise>
-							</c:choose>
-						</div>
+								</form>
+							</c:when>
+							<c:otherwise>
+								<div class="px-2">
+									<button class="btn btn-secondary rounded-0 w-100 btn-sm fw-bold" disabled>SIN STOCK</button>
+								</div>
+							</c:otherwise>
+						</c:choose>
 					</div>
 				</div>
 			</c:forEach>
 		</div>
 
 		<div class="text-center mt-5">
-			<a
-				href="${pageContext.request.contextPath}/productos/categoria/new-in"
-				class="btn btn-link text-dark fw-bold text-decoration-none border-bottom border-dark pb-1">VER
-				TODO</a>
+			<a href="${pageContext.request.contextPath}/productos/categoria/new-in"
+				class="btn btn-link text-dark fw-bold text-decoration-none border-bottom border-dark pb-1">VER TODO</a>
 		</div>
 	</div>
 
@@ -401,8 +409,7 @@ footer {
 						href="#" class="footer-link">CAMBIOS Y DEVOLUCIONES</a> <a
 						href="#" class="footer-link">PRIVACIDAD</a>
 					<div class="mt-3">
-						<img
-							src="${pageContext.request.contextPath}/images/libro_reclamaciones.png"
+						<img src="${pageContext.request.contextPath}/images/libro_reclamaciones.png"
 							alt="Libro de Reclamaciones" class="libro-reclamaciones">
 					</div>
 				</div>
@@ -429,27 +436,22 @@ footer {
 				</div>
 			</div>
 			<div class="text-center mt-5 pt-3 border-top border-secondary">
-				<p class="mb-0">2025 KIDS MADE HERE. Todos los derechos
-					reservados.</p>
+				<p class="mb-0">2025 KIDS MADE HERE. Todos los derechos reservados.</p>
 			</div>
 		</div>
 	</footer>
 
-	<script
-		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 	<script>
         function updateQty(btn, change) {
-            // Busca el input que está al lado del botón presionado
             const input = btn.parentElement.querySelector('input');
             let value = parseInt(input.value);
             const min = parseInt(input.min);
             const max = parseInt(input.max);
             
             value += change;
-            
-            // Solo actualiza si está dentro del rango permitido (1 a Stock Actual)
             if (value >= min && value <= max) {
                 input.value = value;
             }

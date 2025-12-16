@@ -43,7 +43,6 @@
                         <tr>
                             <td>#${m.movimientoId}</td>
                             <td>
-                                <%-- Formato de fecha legible --%>
                                 ${m.fechaMovimiento.toLocalDate()} <br>
                                 <small class="text-muted">${m.fechaMovimiento.toLocalTime().toString().substring(0,8)}</small>
                             </td>
@@ -61,8 +60,16 @@
                                 </c:choose>
                             </td>
                             <td>
-                                ${m.usuario.nombre} ${m.usuario.apellido}<br>
-                                <small class="text-muted">(${m.usuario.rol.nombreRol})</small>
+                                <%-- AQUÍ ESTABA EL ERROR: Validamos si existe usuario --%>
+                                <c:choose>
+                                    <c:when test="${not empty m.usuario}">
+                                        ${m.usuario.nombre} ${m.usuario.apellido}<br>
+                                        <small class="text-muted">(${m.usuario.rol.nombreRol})</small>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="badge bg-info text-dark">Sistema / Web</span>
+                                    </c:otherwise>
+                                </c:choose>
                             </td>
                             <td>
                                 ${m.motivo}
