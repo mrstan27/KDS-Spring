@@ -106,6 +106,21 @@
             </a>
         </c:if>
 
+        <%-- 6. SISTEMA BACKUP (Admin y Soporte) --%>
+        <c:if test="${usuario.rol.nombreRol == 'Administrador' || usuario.rol.nombreRol == 'Soporte'}">
+            <a href="${pageContext.request.contextPath}/backup/exportar" class="card-menu" style="border-left: 5px solid #27ae60;">
+                <div class="card-icon" style="color: #27ae60;"><i class="fa-solid fa-download"></i></div>
+                <div class="card-title">Backup</div>
+                <div class="card-desc">Descargar copia .sql</div>
+            </a>
+
+            <a href="${pageContext.request.contextPath}/backup/restaurar" class="card-menu" style="border-left: 5px solid #e74c3c;">
+                <div class="card-icon" style="color: #e74c3c;"><i class="fa-solid fa-rotate-left"></i></div>
+                <div class="card-title">Restaurar</div>
+                <div class="card-desc">Recuperar datos antiguos</div>
+            </a>
+        </c:if>
+
     </div>
 
 </body>

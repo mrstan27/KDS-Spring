@@ -41,41 +41,48 @@ public class SecurityConfig {
                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
 
-                // --- RUTAS DE ACCESO PÚBLICO (LOGIN Y TIENDA) ---
+                // RUTAS PÚBLICAS
                 .requestMatchers("/", "/index").permitAll()
-                .requestMatchers("/login/loginusuario", "/login/logincliente", "/auth/**", "/login/login-success").permitAll()
+                .requestMatchers("/login/**", "/auth/**").permitAll()
                 .requestMatchers("/cliente/nuevo", "/cliente/guardar").permitAll()
                 .requestMatchers("/productos/categoria/**", "/productos/detalle/**").permitAll() 
                 .requestMatchers("/carrito", "/carrito/agregar/**", "/carrito/eliminar/**").permitAll()
 
-                // --- REGLAS DE NEGOCIO PRIVADAS ---
+                // --- REGLAS DE NEGOCIO ---
                 
-                // EL MENÚ PRINCIPAL: Solo autenticados (Cualquier rol)
+                // MENÚ PRINCIPAL
                 .requestMatchers("/login/menu").authenticated()
 
                 // 1. ADMIN
                 .requestMatchers("/usuarios/**", "/roles/**", "/compras/aprobar/**", "/compras/rechazar/**").hasAuthority("Administrador")
 
-                // 2. ALMACÉN (Kardex y Recepción)
+                // 2. ALMACÉN
                 .requestMatchers("/compras/recepcionar/**", "/compras/facturar", "/movimientos/**").hasAnyAuthority("Administrador", "Almacenero")
 
-                // 3. COMPRAS (Gestión Productos)
-                .requestMatchers("/productos/nuevo", "/productos/guardar", "/productos/editar/**", "/productos/eliminar/**", "/categorias/**", "/compras/cotizaciones/**", "/proveedor/**").hasAnyAuthority("Administrador", "Compras")
+                // 3. COMPRAS
+                .requestMatchers("/productos/nuevo", "/productos/guardar", "/productos/editar/**", "/productos/eliminar/**", 
+                                 "/categorias/**", "/compras/cotizaciones/**", "/proveedor/**").hasAnyAuthority("Administrador", "Compras")
 
-                // 4. VENTAS WEB Y POS
+                // 4. VENTAS WEB (Cliente)
                 .requestMatchers("/carrito/checkout", "/carrito/procesar-pago", "/mi-cuenta/**").hasAuthority("CLIENTE")
+
+                // 5. VENTAS POS (Vendedor)
                 .requestMatchers("/ventas/**").hasAnyAuthority("Administrador", "Vendedor")
                 
-                // 5. REPORTES
+                // 6. REPORTES
                 .requestMatchers("/reportes/**").hasAnyAuthority("Administrador", "Vendedor", "Almacenero")
+                
+                // 7. BACKUP Y RESTAURACIÓN (NUEVO - Solo Admin y Soporte)
+                .requestMatchers("/backup/**").hasAnyAuthority("Administrador", "Soporte")
 
-                // Cualquier otra cosa requiere login
+                // Acceso general a listados
+                .requestMatchers("/compras").authenticated() 
+
                 .anyRequest().authenticated()
             )
             .formLogin(login -> login
                 .loginPage("/login/loginusuario")
                 .loginProcessingUrl("/auth/login-process")
-                // EL "true" AQUÍ ES VITAL: Fuerza ir al controlador de éxito, ignorando a dónde querías ir antes
                 .defaultSuccessUrl("/login/login-success", true) 
                 .failureHandler((request, response, exception) -> {
                     String tipoAcceso = request.getParameter("tipoAcceso");
